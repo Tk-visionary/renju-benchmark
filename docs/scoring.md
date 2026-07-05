@@ -51,6 +51,10 @@ Difficulty labels are assigned by the generator:
 - `hard`: double-four, double-three, color contrast, exact-five exception
 - `expert`: noisy board variants and future mixed traps
 
+Noisy records are generated with unrelated stones away from the main tactical line. In noisy next-move records,
+`best_moves` contains the intended labeled answers, but the evaluator still gives partial credit to winning moves
+outside the explicit best set.
+
 ## Rule Mode
 
 Rule-classification records are evaluated with their expected labels. Next-move records are scored with a mode chosen

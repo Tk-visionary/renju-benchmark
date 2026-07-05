@@ -398,6 +398,69 @@ def make_exact_five_exception(seed: int, index: int) -> list[dict]:
     ]
 
 
+def make_exact_five_exception_variants(seed: int, index: int) -> list[dict]:
+    row = 7 + (index % 3) - 1
+    col = 7 + (index % 5) - 2
+    move = format_coord(row, col)
+    variants = []
+
+    double_three_points = [
+        (row, col - 4, BLACK), (row, col - 3, BLACK), (row, col - 2, BLACK), (row, col - 1, BLACK),
+        (row - 2, col, BLACK), (row - 1, col, BLACK),
+    ]
+    double_three_board = board_text(double_three_points)
+    double_three_tags = ["black", "exact_five_exception", "apparent_double_three", "win", "rule"]
+    variants.extend([
+        next_record(
+            f"next_exact_five_exception_double_three_seed{seed}_{index:05d}",
+            "black",
+            double_three_board,
+            [move],
+            double_three_tags,
+            difficulty="hard",
+            mode="strict",
+        ),
+        rule_record(
+            f"rule_exact_five_exception_double_three_seed{seed}_{index:05d}",
+            "black",
+            double_three_board,
+            move,
+            "win",
+            double_three_tags,
+            "hard",
+        ),
+    ])
+
+    overline_points = [
+        (row, col - 4, BLACK), (row, col - 3, BLACK), (row, col - 2, BLACK), (row, col - 1, BLACK),
+        (row - 3, col, BLACK), (row - 2, col, BLACK), (row - 1, col, BLACK), (row + 1, col, BLACK),
+        (row + 2, col, BLACK),
+    ]
+    overline_board = board_text(overline_points)
+    overline_tags = ["black", "exact_five_exception", "overline_exception", "win", "rule"]
+    variants.extend([
+        next_record(
+            f"next_exact_five_exception_overline_seed{seed}_{index:05d}",
+            "black",
+            overline_board,
+            [move],
+            overline_tags,
+            difficulty="hard",
+            mode="strict",
+        ),
+        rule_record(
+            f"rule_exact_five_exception_overline_seed{seed}_{index:05d}",
+            "black",
+            overline_board,
+            move,
+            "win",
+            overline_tags,
+            "hard",
+        ),
+    ])
+    return variants
+
+
 def classify_move(board_text_value: str, side: str, move: str) -> str:
     board = Board.from_text(board_text_value)
     row, col = parse_coord_relaxed(move)
@@ -425,6 +488,7 @@ def generate(seed: int, count_per_family: int) -> list[dict]:
         records.extend(make_double_three(seed, index))
         records.extend(make_must_block(seed, index))
         records.extend(make_exact_five_exception(seed, index))
+        records.extend(make_exact_five_exception_variants(seed, index))
         records.extend(make_overline_color_contrast(seed, index))
         records.append(make_occupied(seed, index))
         records.append(make_tempting_occupied(seed, index))

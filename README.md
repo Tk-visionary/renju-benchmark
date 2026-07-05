@@ -13,6 +13,7 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `scripts/generate_puzzles.py`: seed指定の問題生成器
 - `scripts/validate_puzzles.py`: JSONL問題の検証
 - `scripts/evaluate_records.py`: 予測JSONLのカテゴリ別集計
+- `scripts/summarize_records.py`: JSONL問題セットの構成集計
 - `renju_benchmark/rapfi.py`: Rapfi/Gomocup互換エンジン用のPython wrapper
 - `docs/rapfi.md`: Rapfi連携メモ
 - `docs/design.md`: ルール・評価設計メモ
@@ -41,6 +42,7 @@ python -m renju_benchmark.demo
 python scripts/validate_puzzles.py data/puzzles.jsonl
 python scripts/generate_puzzles.py --seed 42 --count-per-family 10 --output data/generated/validation_public.jsonl
 python scripts/validate_puzzles.py data/generated/validation_public.jsonl
+python scripts/summarize_records.py data/generated/validation_public.jsonl
 # predictions.jsonl is a model-output file with {"id": ..., "response": ...} rows.
 # python scripts/evaluate_records.py data/generated/validation_public.jsonl predictions.jsonl
 ```

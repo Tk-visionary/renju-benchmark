@@ -18,6 +18,7 @@ jobs:
       - run: python scripts/validate_puzzles.py data/puzzles.jsonl
       - run: python scripts/generate_puzzles.py --seed 42 --count-per-family 3 --output data/generated/ci.jsonl
       - run: python scripts/validate_puzzles.py data/generated/ci.jsonl
+      - run: python scripts/summarize_records.py data/generated/ci.jsonl
       - run: |
           python - <<'PY'
           import json
