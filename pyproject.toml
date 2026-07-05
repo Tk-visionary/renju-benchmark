@@ -3,8 +3,8 @@ name = "renju-benchmark"
 version = "0.1.0"
 description = "Renju benchmark utilities for Kaggle Benchmarks"
 requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-
