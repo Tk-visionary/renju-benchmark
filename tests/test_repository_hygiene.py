@@ -5,12 +5,12 @@ from pathlib import Path
 
 
 LOCAL_PATH_MARKERS = (
-    "/Users/",
-    "kawaharafutoshishi",
-    "file://",
-    "/private/",
-    "/var/folders/",
-    "C:\\Users\\",
+    "/" + "Users" + "/",
+    "kawahara" + "futoshishi",
+    "file" + "://",
+    "/" + "private" + "/",
+    "/" + "var" + "/" + "folders" + "/",
+    "C:" + "\\" + "Users" + "\\",
 )
 
 
