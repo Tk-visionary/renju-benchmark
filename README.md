@@ -8,6 +8,7 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `renju_benchmark/rating.py`: Elo風の対戦レーティング集計
 - `renju_benchmark/tasks.py`: 採点・応答解析ヘルパー
 - `renju_benchmark/kaggle_tasks.py`: Kaggle Benchmarks用タスクエントリポイント
+- `kaggle_tasks/`: Kaggle CLIでpushするself-contained task files
 - `renju_benchmark/agents.py`: 固定bot
 - `data/public_examples.jsonl`: 公開サンプル
 - `data/puzzles.jsonl`: 開発用の小さな問題セット
@@ -60,6 +61,17 @@ Kaggle向けの薄い入口は `renju_benchmark/kaggle_tasks.py` に置き、再
 `renju_rule_classification` は strict 相当の少数精密問題に向けています。next-moveの採点は `best_moves`,
 `good_moves`, `blocking_moves`, `forbidden_moves` を使えます。Scoring details are documented in
 `docs/scoring.md`; Kaggle integration details are documented in `docs/kaggle.md`.
+
+Kaggle CLIでそのままpushする場合は、repo packageに依存しない `kaggle_tasks/*.py` を使います。
+
+```bash
+kaggle b init -y
+python kaggle_tasks/renju_next_move_public.py
+kaggle b t push renju-next-move-public -f kaggle_tasks/renju_next_move_public.py --wait
+
+python kaggle_tasks/renju_rule_classification_public.py
+kaggle b t push renju-rule-classification-public -f kaggle_tasks/renju_rule_classification_public.py --wait
+```
 
 ## Rapfi integration
 

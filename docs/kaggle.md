@@ -6,6 +6,10 @@ additional arguments are task inputs. Kaggle's docs also show `.evaluate()` for 
 This repository keeps reusable parsing and scoring logic in `renju_benchmark.tasks` and Kaggle-decorated entrypoints
 in `renju_benchmark.kaggle_tasks`.
 
+For Kaggle CLI uploads, use the self-contained files under `kaggle_tasks/`. These files intentionally do not import
+the local `renju_benchmark` package, because `kaggle b t push ... -f task.py` uploads the task file as the executable
+artifact. The push files embed small public evaluation records and score against deterministic labels.
+
 ## Tasks
 
 - `renju_next_move`
@@ -75,3 +79,32 @@ json.dumps(record)
 After importing `renju_benchmark.kaggle_tasks` in a Kaggle Benchmark notebook, the decorated task functions should be
 registered by `kaggle_benchmarks`.
 
+## Push-Ready Task Files
+
+The files below are formatted as Jupytext-style Python notebooks with `# %%` cells, import `kaggle_benchmarks as
+kbench`, define exactly one `@kbench.task`, include a return type annotation, and call `.evaluate(...)` at the end.
+
+- `kaggle_tasks/renju_next_move_public.py`
+- `kaggle_tasks/renju_rule_classification_public.py`
+
+Suggested local validation and push flow:
+
+```bash
+kaggle b init -y
+python kaggle_tasks/renju_next_move_public.py
+ls -1 *.run.json
+kaggle b t push renju-next-move-public -f kaggle_tasks/renju_next_move_public.py --wait
+
+python kaggle_tasks/renju_rule_classification_public.py
+ls -1 *.run.json
+kaggle b t push renju-rule-classification-public -f kaggle_tasks/renju_rule_classification_public.py --wait
+```
+
+If credentials expire, refresh them with:
+
+```bash
+kaggle b auth -y
+```
+
+The push files are intentionally small public smoke tasks. Larger public/hidden sets should be generated and attached
+as Kaggle datasets later, then read inside the same task-file pattern.
