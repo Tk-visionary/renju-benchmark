@@ -116,19 +116,20 @@ as Kaggle datasets later, then read inside the same task-file pattern.
 
 ## Model Arena Task
 
-`kaggle_tasks/renju_model_arena_public.py` runs a small model-vs-model Renju match. The model selected by
-`kaggle b t run ... -m` is the candidate model. The opponent is specified in the evaluation row through
-`opponent_model`, currently `anthropic/claude-haiku-4-5@20251001`.
+`kaggle_tasks/renju_model_arena_public.py` runs a small model-vs-model Renju match. The actual pair is specified by
+each evaluation row through `black_model` and `white_model`; the model selected by `kaggle b t run ... -m` is only the
+Kaggle run trigger. This avoids accidentally turning the second run into self-play.
 
 The task returns a structured result:
 
 ```json
 {
   "match_id": "...",
-  "black": "candidate",
+  "black": "google/gemini-3-flash-preview",
   "white": "anthropic/claude-haiku-4-5@20251001",
   "result": "black_win",
-  "candidate_score": 1.0,
+  "black_score": 1.0,
+  "white_score": 0.0,
   "moves": []
 }
 ```
@@ -138,10 +139,14 @@ Kaggle Benchmarks records the match output, and Elo-style ratings are computed a
 ```bash
 kaggle b t push renju-model-arena-public -f kaggle_tasks/renju_model_arena_public.py --wait
 kaggle b t run renju-model-arena-public -m google/gemini-3-flash-preview --wait
-kaggle b t run renju-model-arena-public -m anthropic/claude-haiku-4-5@20251001 --wait
 kaggle b t download renju-model-arena-public -o data/generated/arena_results -f
 python scripts/rate_arena_results.py data/generated/arena_results
 ```
+
+The default task file currently runs:
+
+- `google/gemini-3-flash-preview` as black vs `anthropic/claude-haiku-4-5@20251001` as white
+- `anthropic/claude-haiku-4-5@20251001` as black vs `google/gemini-3-flash-preview` as white
 
 This is intentionally an experimental arena track, separate from the deterministic next-move and rule-classification
 tasks.

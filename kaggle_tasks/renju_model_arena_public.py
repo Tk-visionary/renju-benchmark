@@ -35,15 +35,15 @@ OPENING_BOARD = "\n".join([
 EVALUATION_DATA = pd.DataFrame([
     {
         "match_id": "gemini-vs-claude-black",
-        "candidate_side": "black",
-        "opponent_model": "anthropic/claude-haiku-4-5@20251001",
+        "black_model": "google/gemini-3-flash-preview",
+        "white_model": "anthropic/claude-haiku-4-5@20251001",
         "board_text": OPENING_BOARD,
         "max_plies": 12,
     },
     {
         "match_id": "gemini-vs-claude-white",
-        "candidate_side": "white",
-        "opponent_model": "anthropic/claude-haiku-4-5@20251001",
+        "black_model": "anthropic/claude-haiku-4-5@20251001",
+        "white_model": "google/gemini-3-flash-preview",
         "board_text": OPENING_BOARD,
         "max_plies": 12,
     },
@@ -129,13 +129,13 @@ def winner_from_illegal(color: str) -> str:
     return "white_win" if color == BLACK else "black_win"
 
 
-def candidate_score(result: str, candidate_side: str) -> float:
+def score_for_black(result: str) -> float:
     if result == "draw":
         return 0.5
     if result == "black_win":
-        return 1.0 if candidate_side == "black" else 0.0
+        return 1.0
     if result == "white_win":
-        return 1.0 if candidate_side == "white" else 0.0
+        return 0.0
     return 0.5
 
 
@@ -144,23 +144,24 @@ def candidate_score(result: str, candidate_side: str) -> float:
 def renju_model_arena_public(
     llm,
     match_id: str,
-    candidate_side: str,
-    opponent_model: str,
+    black_model: str,
+    white_model: str,
     board_text: str,
     max_plies: int,
 ) -> dict:
-    opponent = kbench.llms[opponent_model]
+    del llm
+    players = {
+        "black": kbench.llms[black_model],
+        "white": kbench.llms[white_model],
+    }
     board = board_from_text(board_text)
-    candidate_side = candidate_side.lower()
-    black_player = "candidate" if candidate_side == "black" else opponent_model
-    white_player = "candidate" if candidate_side == "white" else opponent_model
     moves = []
     result = "draw"
 
     for ply in range(max_plies):
         color = BLACK if ply % 2 == 0 else WHITE
         side = "black" if color == BLACK else "white"
-        player = llm if side == candidate_side else opponent
+        player = players[side]
         with kbench.chats.new(f"{match_id}-{side}-{ply}"):
             response = player.prompt(prompt_for_move(board, side, match_id, ply))
         move = parse_coord(response)
@@ -182,12 +183,11 @@ def renju_model_arena_public(
 
     return {
         "match_id": match_id,
-        "black": black_player,
-        "white": white_player,
-        "candidate_side": candidate_side,
-        "opponent_model": opponent_model,
+        "black": black_model,
+        "white": white_model,
         "result": result,
-        "candidate_score": candidate_score(result, candidate_side),
+        "black_score": score_for_black(result),
+        "white_score": 1.0 - score_for_black(result),
         "moves": moves,
     }
 

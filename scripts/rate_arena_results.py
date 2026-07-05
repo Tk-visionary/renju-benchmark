@@ -65,6 +65,8 @@ def main() -> None:
             "white": result["white"],
             "result": result["result"],
             "candidate_score": result.get("candidate_score"),
+            "black_score": result.get("black_score"),
+            "white_score": result.get("white_score"),
         })
 
     output = {
