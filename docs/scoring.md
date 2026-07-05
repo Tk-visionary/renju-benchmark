@@ -44,6 +44,13 @@ failures. Non-coordinate output is a parser failure.
 - difficulty scores, such as `difficulty:hard`
 - result-type rates, such as `next_move/result:off_board_rate`
 
+Difficulty labels are assigned by the generator:
+
+- `easy`: exact five, occupied, off-board
+- `medium`: overline basics, must-block, tempting occupied
+- `hard`: double-four, double-three, color contrast, exact-five exception
+- `expert`: noisy board variants and future mixed traps
+
 ## Rule Mode
 
 Rule-classification records are evaluated with their expected labels. Next-move records are scored with a mode chosen

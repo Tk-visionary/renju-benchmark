@@ -28,13 +28,20 @@ jobs:
           bad = Path("data/generated/ci_bad_predictions.jsonl")
           rows = []
           bad_rows = []
+          wrong_label = {
+              "legal": "forbidden",
+              "forbidden": "legal",
+              "win": "legal",
+              "occupied": "legal",
+              "off_board": "legal",
+          }
           for line in records.read_text().splitlines():
               if not line.strip():
                   continue
               record = json.loads(line)
               if record.get("track") == "rule_classification":
                   response = json.dumps({"class": record["expected"]})
-                  bad_response = json.dumps({"class": "legal"})
+                  bad_response = json.dumps({"class": wrong_label[record["expected"]]})
               else:
                   moves = (
                       record.get("best_moves")

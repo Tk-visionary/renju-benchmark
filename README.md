@@ -40,6 +40,7 @@ python -m pytest -q
 python -m renju_benchmark.demo
 python scripts/validate_puzzles.py data/puzzles.jsonl
 python scripts/generate_puzzles.py --seed 42 --count-per-family 10 --output data/generated/validation_public.jsonl
+python scripts/validate_puzzles.py data/generated/validation_public.jsonl
 # predictions.jsonl is a model-output file with {"id": ..., "response": ...} rows.
 # python scripts/evaluate_records.py data/generated/validation_public.jsonl predictions.jsonl
 ```

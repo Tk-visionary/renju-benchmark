@@ -21,6 +21,7 @@ RESULT_TYPES = (
     "off_board",
     "black_forbidden",
 )
+VALID_MODES = {"fast", "strict", "puzzle"}
 
 
 def color_from_side(side: str) -> str:
@@ -34,7 +35,10 @@ def coord_set(coords: list[str], relaxed: bool = False) -> set[tuple[int, int]]:
 
 def mode_for_record(record: dict) -> str:
     if record.get("mode"):
-        return str(record["mode"])
+        mode = str(record["mode"]).lower()
+        if mode not in VALID_MODES:
+            raise ValueError(f"{record['id']}: invalid mode {mode}")
+        return mode
     tags = set(record.get("tags", []))
     if "strict" in tags or "double_three" in tags:
         return "strict"

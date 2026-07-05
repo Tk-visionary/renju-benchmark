@@ -32,6 +32,29 @@ def board_text(points: list[tuple[int, int, str]]) -> str:
     return "\n".join("".join(row) for row in rows)
 
 
+def add_noise(
+    points: list[tuple[int, int, str]],
+    rng: random.Random,
+    count: int,
+    forbidden_zone: set[tuple[int, int]],
+) -> list[tuple[int, int, str]]:
+    used = {(row, col) for row, col, _ in points}
+    output = list(points)
+    attempts = 0
+    while len(output) < len(points) + count and attempts < 1_000:
+        attempts += 1
+        row = rng.randrange(BOARD_SIZE)
+        col = rng.randrange(BOARD_SIZE)
+        if (row, col) in used or (row, col) in forbidden_zone:
+            continue
+        color = BLACK if rng.random() < 0.5 else WHITE
+        output.append((row, col, color))
+        used.add((row, col))
+    if len(output) != len(points) + count:
+        raise RuntimeError("failed to place noise stones")
+    return output
+
+
 def side_name(color: str) -> str:
     return "black" if color == BLACK else "white"
 
@@ -254,6 +277,74 @@ def make_off_board(seed: int, index: int) -> dict:
     )
 
 
+def make_noisy_exact_five(seed: int, index: int) -> list[dict]:
+    rng = random.Random(seed * 70_000 + index)
+    row = rng.randrange(2, 13)
+    col = rng.randrange(3, 8)
+    base = [(row, col + offset, BLACK) for offset in range(4)]
+    forbidden_zone = {(row, c) for c in range(col - 2, col + 6)}
+    points = add_noise(base, rng, count=8, forbidden_zone=forbidden_zone)
+    board = board_text(points)
+    moves = [format_coord(row, col - 1), format_coord(row, col + 4)]
+    tags = ["black", "win", "five", "noisy"]
+    return [
+        next_record(f"next_noisy_exact_five_seed{seed}_{index:05d}", "black", board, moves, tags, difficulty="expert"),
+        rule_record(f"rule_noisy_exact_five_seed{seed}_{index:05d}", "black", board, moves[0], "win", tags, "expert"),
+    ]
+
+
+def make_noisy_black_overline(seed: int, index: int) -> list[dict]:
+    rng = random.Random(seed * 80_000 + index)
+    row = rng.randrange(2, 13)
+    col = rng.randrange(3, 7)
+    base = [(row, col + offset, BLACK) for offset in range(5)]
+    forbidden_zone = {(row, c) for c in range(col - 2, col + 7)}
+    points = add_noise(base, rng, count=8, forbidden_zone=forbidden_zone)
+    board = board_text(points)
+    moves = [format_coord(row, col - 1), format_coord(row, col + 5)]
+    tags = ["black", "overline", "forbidden", "rule", "noisy"]
+    return [
+        next_record(
+            f"next_noisy_black_overline_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [],
+            tags,
+            forbidden_moves=moves,
+            difficulty="expert",
+        ),
+        rule_record(
+            f"rule_noisy_black_overline_seed{seed}_{index:05d}",
+            "black",
+            board,
+            moves[0],
+            "forbidden",
+            tags,
+            "expert",
+        ),
+    ]
+
+
+def make_noisy_tempting_occupied(seed: int, index: int) -> dict:
+    rng = random.Random(seed * 90_000 + index)
+    row = rng.randrange(2, 13)
+    col = rng.randrange(2, 8)
+    base = [(row, col + offset, BLACK) for offset in range(4)]
+    base.append((row, col + 4, WHITE))
+    forbidden_zone = {(row, c) for c in range(col - 1, col + 6)}
+    points = add_noise(base, rng, count=8, forbidden_zone=forbidden_zone)
+    board = board_text(points)
+    return rule_record(
+        f"rule_noisy_tempting_occupied_seed{seed}_{index:05d}",
+        "black",
+        board,
+        format_coord(row, col + 4),
+        "occupied",
+        ["occupied", "tempting_win", "rule", "noisy"],
+        "expert",
+    )
+
+
 def make_overline_color_contrast(seed: int, index: int) -> list[dict]:
     rng = random.Random(seed * 60_000 + index)
     row = rng.randrange(2, 13)
@@ -338,6 +429,9 @@ def generate(seed: int, count_per_family: int) -> list[dict]:
         records.append(make_occupied(seed, index))
         records.append(make_tempting_occupied(seed, index))
         records.append(make_off_board(seed, index))
+        records.extend(make_noisy_exact_five(seed, index))
+        records.extend(make_noisy_black_overline(seed, index))
+        records.append(make_noisy_tempting_occupied(seed, index))
     return records
 
 

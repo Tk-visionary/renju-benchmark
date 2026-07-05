@@ -10,6 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from renju_benchmark.tasks import _immediate_winning_moves, parse_coord_relaxed
 from renju_benchmark.rules import BLACK, WHITE, Board, MoveResult, RenjuGame, RuleMode
 
+VALID_MODES = {"fast", "strict", "puzzle"}
+
 
 def color_from_side(side: str) -> str:
     return BLACK if side.lower() in {"black", "x"} else WHITE
@@ -38,6 +40,9 @@ def validate_record(record: dict) -> None:
     board = Board.from_text(record["board"])
     side = color_from_side(record["side"])
     tags = set(record.get("tags", []))
+    mode = record.get("mode")
+    if mode is not None and str(mode).lower() not in VALID_MODES:
+        raise ValueError(f"{record['id']}: invalid mode {mode}")
 
     if record.get("track") == "rule_classification":
         result, _ = play_strict(board, record["side"], record["move"])
