@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import sys
 import types
+from typing import get_type_hints
 
 
 class DummyLlm:
@@ -38,6 +40,22 @@ def test_kaggle_tasks_register_with_kbench_decorator() -> None:
     assert module.renju_next_move_record._kaggle_task_name == "renju_next_move_record"
     assert module.renju_rule_classification._kaggle_task_name == "renju_rule_classification"
     assert module.renju_rule_classification_record._kaggle_task_name == "renju_rule_classification_record"
+
+
+def test_kaggle_task_signatures_match_benchmarks_contract() -> None:
+    module = import_with_fake_kbench()
+
+    expected = {
+        "renju_next_move": float,
+        "renju_next_move_record": float,
+        "renju_rule_classification": bool,
+        "renju_rule_classification_record": bool,
+    }
+    for name, return_type in expected.items():
+        fn = getattr(module, name)
+        signature = inspect.signature(fn)
+        assert next(iter(signature.parameters)) == "llm"
+        assert get_type_hints(fn)["return"] is return_type
 
 
 def test_kaggle_next_move_scores_json_response() -> None:
