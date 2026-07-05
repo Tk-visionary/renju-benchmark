@@ -33,7 +33,9 @@ RIF International Rulesをベースに、盤面サイズ、勝敗、黒の禁手
 ## Quick check
 
 ```bash
-cd renju_benchmark
+git clone https://github.com/Tk-visionary/renju-benchmark.git
+cd renju-benchmark
+python -m pip install -e ".[dev]"
 python -m pytest -q
 python -m renju_benchmark.demo
 python scripts/validate_puzzles.py data/puzzles.jsonl

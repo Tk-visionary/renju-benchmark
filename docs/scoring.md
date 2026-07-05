@@ -44,3 +44,17 @@ failures. Non-coordinate output is a parser failure.
 - difficulty scores, such as `difficulty:hard`
 - result-type rates, such as `next_move/result:off_board_rate`
 
+## Rule Mode
+
+Rule-classification records are evaluated with their expected labels. Next-move records are scored with a mode chosen
+from the record:
+
+- explicit `mode`, when present;
+- `strict` when tags include `strict` or `double_three`;
+- otherwise `fast`.
+
+FAST mode intentionally skips recursive double-three detection. STRICT mode should be used for double-three and other
+strict forbidden-move cases.
+
+Result-type rates are track-specific, for example `next_move/result:black_forbidden_rate`. This avoids mixing
+rule-classification results such as `correct` with next-move results such as `legal` or `off_board`.

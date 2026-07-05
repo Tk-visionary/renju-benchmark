@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from renju_benchmark.rules import BLACK, WHITE, Board, MoveResult, RenjuGame, RuleMode, parse_coord
+from renju_benchmark.rules import BLACK, WHITE, Board, MoveResult, RenjuGame, parse_coord
 from renju_benchmark.tasks import extract_first_coord, extract_label, parse_coord_relaxed, score_candidate_move
 
 RESULT_TYPES = (
@@ -32,9 +32,18 @@ def coord_set(coords: list[str], relaxed: bool = False) -> set[tuple[int, int]]:
     return {parser(coord) for coord in coords}
 
 
-def classify_move_result(board: Board, side: str, move: tuple[int, int]) -> str:
+def mode_for_record(record: dict) -> str:
+    if record.get("mode"):
+        return str(record["mode"])
+    tags = set(record.get("tags", []))
+    if "strict" in tags or "double_three" in tags:
+        return "strict"
+    return "fast"
+
+
+def classify_move_result(board: Board, side: str, move: tuple[int, int], mode: str) -> str:
     color = color_from_side(side)
-    game = RenjuGame.from_board(board, turn=color, mode=RuleMode.FAST)
+    game = RenjuGame.from_board(board, turn=color, mode=mode)
     result = game.play(*move)
     if result in (MoveResult.BLACK_WIN, MoveResult.WHITE_WIN):
         return "win"
@@ -63,6 +72,7 @@ def score_record(record: dict, response: str) -> dict:
 
     board = Board.from_text(record["board"])
     color = color_from_side(record["side"])
+    mode = mode_for_record(record)
     try:
         move = extract_first_coord(response)
     except ValueError:
@@ -75,12 +85,12 @@ def score_record(record: dict, response: str) -> dict:
         coord_set(record.get("good_moves", [])),
         coord_set(record.get("blocking_moves", [])),
         coord_set(record.get("forbidden_moves", []), relaxed=True),
-        mode="fast",
+        mode=mode,
     )
     return {
         "score": score,
         "parsed": True,
-        "result": classify_move_result(board, record["side"], move),
+        "result": classify_move_result(board, record["side"], move, mode),
     }
 
 
@@ -101,7 +111,6 @@ def add_metric(metrics: dict[str, list[float]], key: str, value: float) -> None:
 def add_result_rates(metrics: dict[str, list[float]], track: str, result: str) -> None:
     for result_type in RESULT_TYPES:
         value = 1.0 if result == result_type else 0.0
-        add_metric(metrics, f"result:{result_type}_rate", value)
         add_metric(metrics, f"{track}/result:{result_type}_rate", value)
 
 

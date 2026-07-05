@@ -44,6 +44,7 @@ def rule_record(
     expected: str,
     tags: list[str],
     difficulty: str,
+    mode: str = "strict",
 ) -> dict:
     return {
         "id": record_id,
@@ -54,6 +55,7 @@ def rule_record(
         "expected": expected,
         "tags": tags,
         "difficulty": difficulty,
+        "mode": mode,
     }
 
 
@@ -67,6 +69,7 @@ def next_record(
     blocking_moves: list[str] | None = None,
     forbidden_moves: list[str] | None = None,
     difficulty: str = "medium",
+    mode: str = "fast",
 ) -> dict:
     return {
         "id": record_id,
@@ -79,6 +82,7 @@ def next_record(
         "forbidden_moves": forbidden_moves or [],
         "tags": tags,
         "difficulty": difficulty,
+        "mode": mode,
     }
 
 
@@ -149,6 +153,7 @@ def make_double_four(seed: int, index: int) -> list[dict]:
             tags,
             forbidden_moves=[move],
             difficulty="hard",
+            mode="strict",
         ),
         rule_record(f"rule_double_four_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
     ]
@@ -173,6 +178,7 @@ def make_double_three(seed: int, index: int) -> list[dict]:
             tags,
             forbidden_moves=[move],
             difficulty="hard",
+            mode="strict",
         ),
         rule_record(f"rule_double_three_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
     ]
@@ -288,7 +294,15 @@ def make_exact_five_exception(seed: int, index: int) -> list[dict]:
     move = format_coord(row, col)
     tags = ["black", "exact_five_exception", "win", "rule"]
     return [
-        next_record(f"next_exact_five_exception_seed{seed}_{index:05d}", "black", board, [move], tags, difficulty="hard"),
+        next_record(
+            f"next_exact_five_exception_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [move],
+            tags,
+            difficulty="hard",
+            mode="strict",
+        ),
         rule_record(f"rule_exact_five_exception_seed{seed}_{index:05d}", "black", board, move, "win", tags, "hard"),
     ]
 

@@ -25,13 +25,16 @@ jobs:
 
           records = Path("data/generated/ci.jsonl")
           preds = Path("data/generated/ci_predictions.jsonl")
+          bad = Path("data/generated/ci_bad_predictions.jsonl")
           rows = []
+          bad_rows = []
           for line in records.read_text().splitlines():
               if not line.strip():
                   continue
               record = json.loads(line)
               if record.get("track") == "rule_classification":
                   response = json.dumps({"class": record["expected"]})
+                  bad_response = json.dumps({"class": "legal"})
               else:
                   moves = (
                       record.get("best_moves")
@@ -40,7 +43,12 @@ jobs:
                       or ["H8"]
                   )
                   response = json.dumps({"move": moves[0]})
+                  bad_moves = record.get("forbidden_moves") or ["P16"]
+                  bad_response = json.dumps({"move": bad_moves[0]})
               rows.append(json.dumps({"id": record["id"], "response": response}))
+              bad_rows.append(json.dumps({"id": record["id"], "response": bad_response}))
           preds.write_text("\n".join(rows) + "\n")
+          bad.write_text("\n".join(bad_rows) + "\n")
           PY
       - run: python scripts/evaluate_records.py data/generated/ci.jsonl data/generated/ci_predictions.jsonl
+      - run: python scripts/evaluate_records.py data/generated/ci.jsonl data/generated/ci_bad_predictions.jsonl
