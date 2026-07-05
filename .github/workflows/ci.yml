@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: python -m pytest -q
+      - run: python scripts/validate_puzzles.py data/puzzles.jsonl
+      - run: python scripts/generate_puzzles.py --seed 42 --count-per-family 3 --output data/generated/ci.jsonl
+      - run: python scripts/validate_puzzles.py data/generated/ci.jsonl

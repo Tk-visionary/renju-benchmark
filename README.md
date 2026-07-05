@@ -56,7 +56,12 @@ The repository does not vendor Rapfi binaries or weights.
 ```bash
 export RAPFI_PATH=/path/to/rapfi
 python scripts/rapfi_move.py board.txt --side black
+python scripts/rapfi_annotate.py data/generated/validation_public.jsonl data/generated/rapfi_annotations.jsonl
 ```
 
 Use this primarily for dataset generation, fixed-opponent experiments, and local tactical validation. Kaggle
 Benchmark tasks should prefer precomputed JSONL labels for reproducibility.
+
+Rapfi is intentionally optional and not part of the official Kaggle score path. The official benchmark tasks are
+Python-only and score against deterministic JSONL labels. Rapfi is best treated as a candidate proposer and local
+analysis tool, not as the sole source of labels.

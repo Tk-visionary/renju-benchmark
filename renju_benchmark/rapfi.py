@@ -55,7 +55,7 @@ class RapfiEngine:
             cwd=str(self.config.cwd) if self.config.cwd is not None else None,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             text=True,
             bufsize=1,
         )
@@ -103,10 +103,7 @@ class RapfiEngine:
             raise RapfiError(f"Rapfi did not respond within {wait:.1f}s")
         line = stdout.readline()
         if line == "":
-            stderr = ""
-            if self.process and self.process.stderr:
-                stderr = self.process.stderr.read()
-            raise RapfiError(f"Rapfi process ended unexpectedly. stderr={stderr!r}")
+            raise RapfiError("Rapfi process ended unexpectedly")
         return line.strip()
 
     def _stdin(self) -> TextIO:

@@ -188,4 +188,5 @@ def describe_move(board_text: str, side: str, move: str) -> str:
     row, col = parse_coord_relaxed(move)
     game = RenjuGame(board=board, turn=color)
     result = game.play(row, col)
-    return f"{format_coord(row, col)}: {result.value}"
+    coord = format_coord(row, col) if board.in_bounds(row, col) else move.strip().upper()
+    return f"{coord}: {result.value}"

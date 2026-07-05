@@ -5,6 +5,13 @@ description = "Renju benchmark utilities for Kaggle Benchmarks"
 requires-python = ">=3.10"
 license = "GPL-3.0-or-later"
 
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
