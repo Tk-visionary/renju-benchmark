@@ -8,8 +8,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from renju_benchmark.rules import BLACK, WHITE, Board, parse_coord
+from renju_benchmark.rules import BLACK, WHITE, Board, MoveResult, RenjuGame, RuleMode, parse_coord
 from renju_benchmark.tasks import extract_first_coord, extract_label, parse_coord_relaxed, score_candidate_move
+
+RESULT_TYPES = (
+    "parse_failure",
+    "correct",
+    "incorrect",
+    "win",
+    "legal",
+    "occupied",
+    "off_board",
+    "black_forbidden",
+)
 
 
 def color_from_side(side: str) -> str:
@@ -21,22 +32,41 @@ def coord_set(coords: list[str], relaxed: bool = False) -> set[tuple[int, int]]:
     return {parser(coord) for coord in coords}
 
 
-def score_record(record: dict, response: str) -> tuple[float, bool]:
+def classify_move_result(board: Board, side: str, move: tuple[int, int]) -> str:
+    color = color_from_side(side)
+    game = RenjuGame.from_board(board, turn=color, mode=RuleMode.FAST)
+    result = game.play(*move)
+    if result in (MoveResult.BLACK_WIN, MoveResult.WHITE_WIN):
+        return "win"
+    if result == MoveResult.BLACK_FORBIDDEN:
+        return "black_forbidden"
+    if result == MoveResult.ILLEGAL_OFF_BOARD:
+        return "off_board"
+    if result == MoveResult.ILLEGAL_OCCUPIED:
+        return "occupied"
+    return "legal"
+
+
+def score_record(record: dict, response: str) -> dict:
     track = record.get("track", "next_move")
     if track == "rule_classification":
         try:
             label = extract_label(response)
         except ValueError:
-            return 0.0, False
+            return {"score": 0.0, "parsed": False, "result": "parse_failure"}
         expected = record["expected"].lower().replace("-", "_")
-        return (1.0 if label == expected else 0.0), True
+        return {
+            "score": 1.0 if label == expected else 0.0,
+            "parsed": True,
+            "result": "correct" if label == expected else "incorrect",
+        }
 
     board = Board.from_text(record["board"])
     color = color_from_side(record["side"])
     try:
         move = extract_first_coord(response)
     except ValueError:
-        return 0.0, False
+        return {"score": 0.0, "parsed": False, "result": "parse_failure"}
     score = score_candidate_move(
         board,
         color,
@@ -47,7 +77,11 @@ def score_record(record: dict, response: str) -> tuple[float, bool]:
         coord_set(record.get("forbidden_moves", []), relaxed=True),
         mode="fast",
     )
-    return score, True
+    return {
+        "score": score,
+        "parsed": True,
+        "result": classify_move_result(board, record["side"], move),
+    }
 
 
 def load_predictions(path: Path) -> dict[str, str]:
@@ -62,6 +96,13 @@ def load_predictions(path: Path) -> dict[str, str]:
 
 def add_metric(metrics: dict[str, list[float]], key: str, value: float) -> None:
     metrics[key].append(value)
+
+
+def add_result_rates(metrics: dict[str, list[float]], track: str, result: str) -> None:
+    for result_type in RESULT_TYPES:
+        value = 1.0 if result == result_type else 0.0
+        add_metric(metrics, f"result:{result_type}_rate", value)
+        add_metric(metrics, f"{track}/result:{result_type}_rate", value)
 
 
 def main() -> None:
@@ -79,12 +120,22 @@ def main() -> None:
             continue
         record = json.loads(line)
         response = predictions.get(record["id"], "")
-        score, parsed = score_record(record, response)
+        detail = score_record(record, response)
+        score = float(detail["score"])
+        parsed = bool(detail["parsed"])
+        result = str(detail["result"])
+        track = record.get("track", "next_move")
         parse_success.append(1.0 if parsed else 0.0)
         add_metric(metrics, "overall", score)
-        add_metric(metrics, record.get("track", "next_move"), score)
+        add_metric(metrics, track, score)
+        add_result_rates(metrics, track, result)
         for tag in record.get("tags", []):
-            add_metric(metrics, tag, score)
+            add_metric(metrics, f"tag:{tag}", score)
+            add_metric(metrics, f"{track}/tag:{tag}", score)
+        difficulty = record.get("difficulty")
+        if difficulty:
+            add_metric(metrics, f"difficulty:{difficulty}", score)
+            add_metric(metrics, f"{track}/difficulty:{difficulty}", score)
 
     output = {
         "parse_success_rate": sum(parse_success) / len(parse_success) if parse_success else 0.0,
@@ -99,4 +150,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

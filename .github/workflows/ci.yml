@@ -18,3 +18,29 @@ jobs:
       - run: python scripts/validate_puzzles.py data/puzzles.jsonl
       - run: python scripts/generate_puzzles.py --seed 42 --count-per-family 3 --output data/generated/ci.jsonl
       - run: python scripts/validate_puzzles.py data/generated/ci.jsonl
+      - run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          records = Path("data/generated/ci.jsonl")
+          preds = Path("data/generated/ci_predictions.jsonl")
+          rows = []
+          for line in records.read_text().splitlines():
+              if not line.strip():
+                  continue
+              record = json.loads(line)
+              if record.get("track") == "rule_classification":
+                  response = json.dumps({"class": record["expected"]})
+              else:
+                  moves = (
+                      record.get("best_moves")
+                      or record.get("good_moves")
+                      or record.get("blocking_moves")
+                      or ["H8"]
+                  )
+                  response = json.dumps({"move": moves[0]})
+              rows.append(json.dumps({"id": record["id"], "response": response}))
+          preds.write_text("\n".join(rows) + "\n")
+          PY
+      - run: python scripts/evaluate_records.py data/generated/ci.jsonl data/generated/ci_predictions.jsonl

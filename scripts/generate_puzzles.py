@@ -3,12 +3,22 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from renju_benchmark.rules import BLACK, WHITE, BOARD_SIZE, Board, MoveResult, RenjuGame, RuleMode, format_coord, parse_coord
+from renju_benchmark.rules import BLACK, WHITE, BOARD_SIZE, Board, MoveResult, RenjuGame, RuleMode, format_coord
+
+ANY_COORD_RE = re.compile(r"\b([A-Za-z])([0-9]{1,2})\b")
+
+
+def parse_coord_relaxed(coord: str) -> tuple[int, int]:
+    match = ANY_COORD_RE.fullmatch(coord.strip())
+    if not match:
+        raise ValueError(f"bad coordinate: {coord}")
+    return int(match.group(2)) - 1, ord(match.group(1).lower()) - ord("a")
 
 
 def empty_rows() -> list[list[str]]:
@@ -33,6 +43,7 @@ def rule_record(
     move: str,
     expected: str,
     tags: list[str],
+    difficulty: str,
 ) -> dict:
     return {
         "id": record_id,
@@ -42,6 +53,7 @@ def rule_record(
         "move": move,
         "expected": expected,
         "tags": tags,
+        "difficulty": difficulty,
     }
 
 
@@ -54,6 +66,7 @@ def next_record(
     good_moves: list[str] | None = None,
     blocking_moves: list[str] | None = None,
     forbidden_moves: list[str] | None = None,
+    difficulty: str = "medium",
 ) -> dict:
     return {
         "id": record_id,
@@ -65,6 +78,7 @@ def next_record(
         "blocking_moves": blocking_moves or [],
         "forbidden_moves": forbidden_moves or [],
         "tags": tags,
+        "difficulty": difficulty,
     }
 
 
@@ -77,8 +91,8 @@ def make_exact_five(seed: int, index: int, color: str) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 4)]
     tags = [side, "win", "five"]
     return [
-        next_record(f"next_exact_five_seed{seed}_{index:05d}", side, board, moves, tags),
-        rule_record(f"rule_exact_five_seed{seed}_{index:05d}", side, board, moves[0], "win", tags),
+        next_record(f"next_exact_five_seed{seed}_{index:05d}", side, board, moves, tags, difficulty="easy"),
+        rule_record(f"rule_exact_five_seed{seed}_{index:05d}", side, board, moves[0], "win", tags, "easy"),
     ]
 
 
@@ -90,8 +104,8 @@ def make_white_overline(seed: int, index: int) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 5)]
     tags = ["white", "overline", "win"]
     return [
-        next_record(f"next_white_overline_seed{seed}_{index:05d}", "white", board, moves, tags),
-        rule_record(f"rule_white_overline_seed{seed}_{index:05d}", "white", board, moves[0], "win", tags),
+        next_record(f"next_white_overline_seed{seed}_{index:05d}", "white", board, moves, tags, difficulty="medium"),
+        rule_record(f"rule_white_overline_seed{seed}_{index:05d}", "white", board, moves[0], "win", tags, "medium"),
     ]
 
 
@@ -103,8 +117,16 @@ def make_black_overline(seed: int, index: int) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 5)]
     tags = ["black", "overline", "forbidden", "rule"]
     return [
-        next_record(f"next_black_overline_seed{seed}_{index:05d}", "black", board, [], tags, forbidden_moves=moves),
-        rule_record(f"rule_black_overline_seed{seed}_{index:05d}", "black", board, moves[0], "forbidden", tags),
+        next_record(
+            f"next_black_overline_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [],
+            tags,
+            forbidden_moves=moves,
+            difficulty="medium",
+        ),
+        rule_record(f"rule_black_overline_seed{seed}_{index:05d}", "black", board, moves[0], "forbidden", tags, "medium"),
     ]
 
 
@@ -119,8 +141,16 @@ def make_double_four(seed: int, index: int) -> list[dict]:
     move = format_coord(row, col)
     tags = ["black", "double_four", "forbidden", "rule"]
     return [
-        next_record(f"next_double_four_seed{seed}_{index:05d}", "black", board, [], tags, forbidden_moves=[move]),
-        rule_record(f"rule_double_four_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags),
+        next_record(
+            f"next_double_four_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [],
+            tags,
+            forbidden_moves=[move],
+            difficulty="hard",
+        ),
+        rule_record(f"rule_double_four_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
     ]
 
 
@@ -135,8 +165,16 @@ def make_double_three(seed: int, index: int) -> list[dict]:
     move = format_coord(row, col)
     tags = ["black", "double_three", "forbidden", "strict", "rule"]
     return [
-        next_record(f"next_double_three_seed{seed}_{index:05d}", "black", board, [], tags, forbidden_moves=[move]),
-        rule_record(f"rule_double_three_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags),
+        next_record(
+            f"next_double_three_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [],
+            tags,
+            forbidden_moves=[move],
+            difficulty="hard",
+        ),
+        rule_record(f"rule_double_three_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
     ]
 
 
@@ -148,8 +186,16 @@ def make_must_block(seed: int, index: int) -> list[dict]:
     block = format_coord(row, col + 4)
     tags = ["black", "defense", "must_block"]
     return [
-        next_record(f"next_must_block_seed{seed}_{index:05d}", "black", board, [block], tags, blocking_moves=[block]),
-        rule_record(f"rule_must_block_seed{seed}_{index:05d}", "black", board, block, "legal", tags),
+        next_record(
+            f"next_must_block_seed{seed}_{index:05d}",
+            "black",
+            board,
+            [block],
+            tags,
+            blocking_moves=[block],
+            difficulty="medium",
+        ),
+        rule_record(f"rule_must_block_seed{seed}_{index:05d}", "black", board, block, "legal", tags, "medium"),
     ]
 
 
@@ -165,6 +211,7 @@ def make_occupied(seed: int, index: int) -> dict:
         format_coord(row, col),
         "occupied",
         ["occupied", "rule"],
+        "easy",
     )
 
 
@@ -182,6 +229,7 @@ def make_tempting_occupied(seed: int, index: int) -> dict:
         format_coord(row, col + 4),
         "occupied",
         ["occupied", "tempting_win", "rule"],
+        "medium",
     )
 
 
@@ -196,6 +244,7 @@ def make_off_board(seed: int, index: int) -> dict:
         move,
         "off_board",
         ["off_board", "rule"],
+        "easy",
     )
 
 
@@ -214,6 +263,7 @@ def make_overline_color_contrast(seed: int, index: int) -> list[dict]:
             move,
             "forbidden",
             ["black", "overline", "forbidden", "color_contrast", "rule"],
+            "hard",
         ),
         rule_record(
             f"rule_contrast_white_overline_seed{seed}_{index:05d}",
@@ -222,6 +272,7 @@ def make_overline_color_contrast(seed: int, index: int) -> list[dict]:
             move,
             "win",
             ["white", "overline", "win", "color_contrast", "rule"],
+            "hard",
         ),
     ]
 
@@ -237,14 +288,14 @@ def make_exact_five_exception(seed: int, index: int) -> list[dict]:
     move = format_coord(row, col)
     tags = ["black", "exact_five_exception", "win", "rule"]
     return [
-        next_record(f"next_exact_five_exception_seed{seed}_{index:05d}", "black", board, [move], tags),
-        rule_record(f"rule_exact_five_exception_seed{seed}_{index:05d}", "black", board, move, "win", tags),
+        next_record(f"next_exact_five_exception_seed{seed}_{index:05d}", "black", board, [move], tags, difficulty="hard"),
+        rule_record(f"rule_exact_five_exception_seed{seed}_{index:05d}", "black", board, move, "win", tags, "hard"),
     ]
 
 
 def classify_move(board_text_value: str, side: str, move: str) -> str:
     board = Board.from_text(board_text_value)
-    row, col = parse_coord(move)
+    row, col = parse_coord_relaxed(move)
     game = RenjuGame.from_board(board, turn=BLACK if side == "black" else WHITE, mode=RuleMode.STRICT)
     result = game.play(row, col)
     if result in (MoveResult.BLACK_WIN, MoveResult.WHITE_WIN):

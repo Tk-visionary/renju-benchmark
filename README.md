@@ -16,6 +16,7 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `renju_benchmark/rapfi.py`: Rapfi/Gomocup互換エンジン用のPython wrapper
 - `docs/rapfi.md`: Rapfi連携メモ
 - `docs/design.md`: ルール・評価設計メモ
+- `docs/scoring.md`: 採点仕様
 - `tests/`: ルールとレーティングの基本テスト
 
 ## Rule scope
@@ -47,6 +48,7 @@ Kaggle Notebook上で `kaggle_benchmarks` が使える環境なら、`renju_benc
 の `renju_next_move` と `renju_rule_classification` をベンチタスクとして利用できます。
 `renju_next_move` は大量評価では `mode="fast"`、`renju_rule_classification` は `strict` 相当の少数精密問題に向けています。
 next-moveの採点は `best_moves`, `good_moves`, `blocking_moves`, `forbidden_moves` を使えます。
+Scoring details are documented in `docs/scoring.md`.
 
 ## Rapfi integration
 
