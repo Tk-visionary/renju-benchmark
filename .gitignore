@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+data/generated/
+predictions.jsonl
+*.predictions.jsonl
+
+.DS_Store
+
