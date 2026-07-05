@@ -8,6 +8,10 @@ license = "GPL-3.0-or-later"
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
 
+[tool.setuptools.packages.find]
+include = ["renju_benchmark*"]
+exclude = ["data*", "docs*", "scripts*", "tests*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
