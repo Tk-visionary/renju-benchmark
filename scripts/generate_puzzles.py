@@ -61,6 +61,7 @@ def side_name(color: str) -> str:
 
 def rule_record(
     record_id: str,
+    family: str,
     side: str,
     board: str,
     move: str,
@@ -71,6 +72,7 @@ def rule_record(
 ) -> dict:
     return {
         "id": record_id,
+        "family": family,
         "track": "rule_classification",
         "side": side,
         "board": board,
@@ -84,6 +86,7 @@ def rule_record(
 
 def next_record(
     record_id: str,
+    family: str,
     side: str,
     board: str,
     best_moves: list[str],
@@ -96,6 +99,7 @@ def next_record(
 ) -> dict:
     return {
         "id": record_id,
+        "family": family,
         "track": "next_move",
         "side": side,
         "board": board,
@@ -118,8 +122,8 @@ def make_exact_five(seed: int, index: int, color: str) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 4)]
     tags = [side, "win", "five"]
     return [
-        next_record(f"next_exact_five_seed{seed}_{index:05d}", side, board, moves, tags, difficulty="easy"),
-        rule_record(f"rule_exact_five_seed{seed}_{index:05d}", side, board, moves[0], "win", tags, "easy"),
+        next_record(f"next_exact_five_seed{seed}_{index:05d}", "exact_five", side, board, moves, tags, difficulty="easy"),
+        rule_record(f"rule_exact_five_seed{seed}_{index:05d}", "exact_five", side, board, moves[0], "win", tags, "easy"),
     ]
 
 
@@ -131,8 +135,8 @@ def make_white_overline(seed: int, index: int) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 5)]
     tags = ["white", "overline", "win"]
     return [
-        next_record(f"next_white_overline_seed{seed}_{index:05d}", "white", board, moves, tags, difficulty="medium"),
-        rule_record(f"rule_white_overline_seed{seed}_{index:05d}", "white", board, moves[0], "win", tags, "medium"),
+        next_record(f"next_white_overline_seed{seed}_{index:05d}", "white_overline", "white", board, moves, tags, difficulty="medium"),
+        rule_record(f"rule_white_overline_seed{seed}_{index:05d}", "white_overline", "white", board, moves[0], "win", tags, "medium"),
     ]
 
 
@@ -146,6 +150,7 @@ def make_black_overline(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_black_overline_seed{seed}_{index:05d}",
+            "black_overline",
             "black",
             board,
             [],
@@ -153,7 +158,7 @@ def make_black_overline(seed: int, index: int) -> list[dict]:
             forbidden_moves=moves,
             difficulty="medium",
         ),
-        rule_record(f"rule_black_overline_seed{seed}_{index:05d}", "black", board, moves[0], "forbidden", tags, "medium"),
+        rule_record(f"rule_black_overline_seed{seed}_{index:05d}", "black_overline", "black", board, moves[0], "forbidden", tags, "medium"),
     ]
 
 
@@ -170,6 +175,7 @@ def make_double_four(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_double_four_seed{seed}_{index:05d}",
+            "double_four",
             "black",
             board,
             [],
@@ -178,7 +184,7 @@ def make_double_four(seed: int, index: int) -> list[dict]:
             difficulty="hard",
             mode="strict",
         ),
-        rule_record(f"rule_double_four_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
+        rule_record(f"rule_double_four_seed{seed}_{index:05d}", "double_four", "black", board, move, "forbidden", tags, "hard"),
     ]
 
 
@@ -195,6 +201,7 @@ def make_double_three(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_double_three_seed{seed}_{index:05d}",
+            "double_three",
             "black",
             board,
             [],
@@ -203,7 +210,7 @@ def make_double_three(seed: int, index: int) -> list[dict]:
             difficulty="hard",
             mode="strict",
         ),
-        rule_record(f"rule_double_three_seed{seed}_{index:05d}", "black", board, move, "forbidden", tags, "hard"),
+        rule_record(f"rule_double_three_seed{seed}_{index:05d}", "double_three", "black", board, move, "forbidden", tags, "hard"),
     ]
 
 
@@ -217,6 +224,7 @@ def make_must_block(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_must_block_seed{seed}_{index:05d}",
+            "must_block",
             "black",
             board,
             [block],
@@ -224,7 +232,7 @@ def make_must_block(seed: int, index: int) -> list[dict]:
             blocking_moves=[block],
             difficulty="medium",
         ),
-        rule_record(f"rule_must_block_seed{seed}_{index:05d}", "black", board, block, "legal", tags, "medium"),
+        rule_record(f"rule_must_block_seed{seed}_{index:05d}", "must_block", "black", board, block, "legal", tags, "medium"),
     ]
 
 
@@ -235,6 +243,7 @@ def make_occupied(seed: int, index: int) -> dict:
     board = board_text([(row, col, BLACK)])
     return rule_record(
         f"rule_occupied_seed{seed}_{index:05d}",
+        "occupied",
         "white",
         board,
         format_coord(row, col),
@@ -253,6 +262,7 @@ def make_tempting_occupied(seed: int, index: int) -> dict:
     board = board_text(points)
     return rule_record(
         f"rule_tempting_occupied_seed{seed}_{index:05d}",
+        "tempting_occupied",
         "black",
         board,
         format_coord(row, col + 4),
@@ -268,6 +278,7 @@ def make_off_board(seed: int, index: int) -> dict:
     side = "black" if index % 2 == 0 else "white"
     return rule_record(
         f"rule_off_board_seed{seed}_{index:05d}",
+        "off_board",
         side,
         board_text([]),
         move,
@@ -288,8 +299,8 @@ def make_noisy_exact_five(seed: int, index: int) -> list[dict]:
     moves = [format_coord(row, col - 1), format_coord(row, col + 4)]
     tags = ["black", "win", "five", "noisy"]
     return [
-        next_record(f"next_noisy_exact_five_seed{seed}_{index:05d}", "black", board, moves, tags, difficulty="expert"),
-        rule_record(f"rule_noisy_exact_five_seed{seed}_{index:05d}", "black", board, moves[0], "win", tags, "expert"),
+        next_record(f"next_noisy_exact_five_seed{seed}_{index:05d}", "noisy_exact_five", "black", board, moves, tags, difficulty="expert"),
+        rule_record(f"rule_noisy_exact_five_seed{seed}_{index:05d}", "noisy_exact_five", "black", board, moves[0], "win", tags, "expert"),
     ]
 
 
@@ -306,6 +317,7 @@ def make_noisy_black_overline(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_noisy_black_overline_seed{seed}_{index:05d}",
+            "noisy_black_overline",
             "black",
             board,
             [],
@@ -315,6 +327,7 @@ def make_noisy_black_overline(seed: int, index: int) -> list[dict]:
         ),
         rule_record(
             f"rule_noisy_black_overline_seed{seed}_{index:05d}",
+            "noisy_black_overline",
             "black",
             board,
             moves[0],
@@ -336,6 +349,7 @@ def make_noisy_tempting_occupied(seed: int, index: int) -> dict:
     board = board_text(points)
     return rule_record(
         f"rule_noisy_tempting_occupied_seed{seed}_{index:05d}",
+        "noisy_tempting_occupied",
         "black",
         board,
         format_coord(row, col + 4),
@@ -355,6 +369,7 @@ def make_overline_color_contrast(seed: int, index: int) -> list[dict]:
     return [
         rule_record(
             f"rule_contrast_black_overline_seed{seed}_{index:05d}",
+            "overline_color_contrast",
             "black",
             black_board,
             move,
@@ -364,6 +379,7 @@ def make_overline_color_contrast(seed: int, index: int) -> list[dict]:
         ),
         rule_record(
             f"rule_contrast_white_overline_seed{seed}_{index:05d}",
+            "overline_color_contrast",
             "white",
             white_board,
             move,
@@ -387,6 +403,7 @@ def make_exact_five_exception(seed: int, index: int) -> list[dict]:
     return [
         next_record(
             f"next_exact_five_exception_seed{seed}_{index:05d}",
+            "exact_five_exception",
             "black",
             board,
             [move],
@@ -394,7 +411,7 @@ def make_exact_five_exception(seed: int, index: int) -> list[dict]:
             difficulty="hard",
             mode="strict",
         ),
-        rule_record(f"rule_exact_five_exception_seed{seed}_{index:05d}", "black", board, move, "win", tags, "hard"),
+        rule_record(f"rule_exact_five_exception_seed{seed}_{index:05d}", "exact_five_exception", "black", board, move, "win", tags, "hard"),
     ]
 
 
@@ -413,6 +430,7 @@ def make_exact_five_exception_variants(seed: int, index: int) -> list[dict]:
     variants.extend([
         next_record(
             f"next_exact_five_exception_double_three_seed{seed}_{index:05d}",
+            "exact_five_exception_double_three",
             "black",
             double_three_board,
             [move],
@@ -422,6 +440,7 @@ def make_exact_five_exception_variants(seed: int, index: int) -> list[dict]:
         ),
         rule_record(
             f"rule_exact_five_exception_double_three_seed{seed}_{index:05d}",
+            "exact_five_exception_double_three",
             "black",
             double_three_board,
             move,
@@ -441,6 +460,7 @@ def make_exact_five_exception_variants(seed: int, index: int) -> list[dict]:
     variants.extend([
         next_record(
             f"next_exact_five_exception_overline_seed{seed}_{index:05d}",
+            "exact_five_exception_overline",
             "black",
             overline_board,
             [move],
@@ -450,6 +470,7 @@ def make_exact_five_exception_variants(seed: int, index: int) -> list[dict]:
         ),
         rule_record(
             f"rule_exact_five_exception_overline_seed{seed}_{index:05d}",
+            "exact_five_exception_overline",
             "black",
             overline_board,
             move,

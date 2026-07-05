@@ -21,6 +21,7 @@ def main() -> None:
     track = Counter()
     difficulty = Counter()
     mode = Counter()
+    family = Counter()
     tags = Counter()
     track_difficulty = Counter()
     track_mode = Counter()
@@ -34,9 +35,11 @@ def main() -> None:
         record_track = record.get("track", "next_move")
         record_difficulty = record.get("difficulty")
         record_mode = record.get("mode")
+        record_family = record.get("family")
         increment(track, record_track)
         increment(difficulty, record_difficulty)
         increment(mode, record_mode)
+        increment(family, record_family)
         increment(track_difficulty, f"{record_track}/{record_difficulty or 'missing'}")
         increment(track_mode, f"{record_track}/{record_mode or 'missing'}")
         for tag in record.get("tags", []):
@@ -47,6 +50,7 @@ def main() -> None:
         "track": dict(sorted(track.items())),
         "difficulty": dict(sorted(difficulty.items())),
         "mode": dict(sorted(mode.items())),
+        "family": dict(sorted(family.items())),
         "track_difficulty": dict(sorted(track_difficulty.items())),
         "track_mode": dict(sorted(track_mode.items())),
         "tags": dict(sorted(tags.items())),
@@ -56,4 +60,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

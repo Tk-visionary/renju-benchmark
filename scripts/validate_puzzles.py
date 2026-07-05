@@ -11,6 +11,10 @@ from renju_benchmark.tasks import _immediate_winning_moves, parse_coord_relaxed
 from renju_benchmark.rules import BLACK, WHITE, Board, MoveResult, RenjuGame, RuleMode
 
 VALID_MODES = {"fast", "strict", "puzzle"}
+VALID_TRACKS = {"rule_classification", "next_move"}
+COMMON_REQUIRED = {"id", "family", "track", "side", "board", "tags", "difficulty", "mode"}
+RULE_REQUIRED = {"move", "expected"}
+NEXT_REQUIRED = {"best_moves", "good_moves", "blocking_moves", "forbidden_moves"}
 
 
 def color_from_side(side: str) -> str:
@@ -36,14 +40,29 @@ def play_strict(board: Board, side: str, coord: str) -> tuple[MoveResult, Board]
     return result, game.board
 
 
+def validate_schema(record: dict) -> None:
+    missing = COMMON_REQUIRED - record.keys()
+    if missing:
+        raise ValueError(f"{record.get('id', '<missing id>')}: missing required keys {sorted(missing)}")
+    if record["track"] not in VALID_TRACKS:
+        raise ValueError(f"{record['id']}: invalid track {record['track']}")
+    if str(record["mode"]).lower() not in VALID_MODES:
+        raise ValueError(f"{record['id']}: invalid mode {record['mode']}")
+    if not isinstance(record["tags"], list):
+        raise ValueError(f"{record['id']}: tags must be a list")
+    if record["track"] == "rule_classification":
+        missing = RULE_REQUIRED - record.keys()
+    else:
+        missing = NEXT_REQUIRED - record.keys()
+    if missing:
+        raise ValueError(f"{record['id']}: missing {record['track']} keys {sorted(missing)}")
+
+
 def validate_record(record: dict) -> None:
+    validate_schema(record)
     board = Board.from_text(record["board"])
     side = color_from_side(record["side"])
     tags = set(record.get("tags", []))
-    mode = record.get("mode")
-    if mode is not None and str(mode).lower() not in VALID_MODES:
-        raise ValueError(f"{record['id']}: invalid mode {mode}")
-
     if record.get("track") == "rule_classification":
         result, _ = play_strict(board, record["side"], record["move"])
         expected = record["expected"].replace("-", "_")

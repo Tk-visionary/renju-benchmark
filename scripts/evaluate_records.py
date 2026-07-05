@@ -145,6 +145,10 @@ def main() -> None:
         for tag in record.get("tags", []):
             add_metric(metrics, f"tag:{tag}", score)
             add_metric(metrics, f"{track}/tag:{tag}", score)
+        family = record.get("family")
+        if family:
+            add_metric(metrics, f"family:{family}", score)
+            add_metric(metrics, f"{track}/family:{family}", score)
         difficulty = record.get("difficulty")
         if difficulty:
             add_metric(metrics, f"difficulty:{difficulty}", score)

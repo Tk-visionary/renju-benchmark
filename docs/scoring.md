@@ -41,6 +41,7 @@ failures. Non-coordinate output is a parser failure.
 - track scores, such as `rule_classification` and `next_move`
 - namespaced tag scores, such as `tag:forbidden`
 - track/tag scores, such as `rule_classification/tag:forbidden`
+- family scores, such as `family:noisy_exact_five`
 - difficulty scores, such as `difficulty:hard`
 - result-type rates, such as `next_move/result:off_board_rate`
 
@@ -54,6 +55,9 @@ Difficulty labels are assigned by the generator:
 Noisy records are generated with unrelated stones away from the main tactical line. In noisy next-move records,
 `best_moves` contains the intended labeled answers, but the evaluator still gives partial credit to winning moves
 outside the explicit best set.
+
+Each record also has a `family` field for dataset management. Family metrics avoid parsing IDs when comparing
+families such as `double_three`, `noisy_black_overline`, or `exact_five_exception_overline`.
 
 ## Rule Mode
 
