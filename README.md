@@ -18,10 +18,12 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `scripts/summarize_records.py`: JSONL問題セットの構成集計
 - `scripts/rate_arena_results.py`: model-vs-model対戦結果のElo集計
 - `renju_benchmark/rapfi.py`: Rapfi/Gomocup互換エンジン用のPython wrapper
+- `renju_benchmark/rl/`: Rapfi imitation / RL研究用の実験モジュール
 - `docs/rapfi.md`: Rapfi連携メモ
 - `docs/design.md`: ルール・評価設計メモ
 - `docs/scoring.md`: 採点仕様
 - `docs/kaggle.md`: Kaggle Benchmarks連携メモ
+- `docs/rl.md`: Rapfiに勝つモデルを作るためのRLロードマップ
 - `tests/`: ルールとレーティングの基本テスト
 
 ## Rule scope
@@ -98,3 +100,15 @@ Benchmark tasks should prefer precomputed JSONL labels for reproducibility.
 Rapfi is intentionally optional and not part of the official Kaggle score path. The official benchmark tasks are
 Python-only and score against deterministic JSONL labels. Rapfi is best treated as a candidate proposer and local
 analysis tool, not as the sole source of labels.
+
+## RL research track
+
+Rapfiを教師・対戦相手として使い、弱設定Rapfiに勝つcompact policy/value modelを作る実験系を
+`renju_benchmark/rl/` と `scripts/rl_*.py` に分離しています。詳細は `docs/rl.md`。
+
+```bash
+export RAPFI_PATH=/path/to/rapfi
+python scripts/rl_collect_rapfi.py --count 1000 --output data/generated/rl/rapfi_1k.jsonl
+python scripts/rl_train_imitation.py --input data/generated/rl/rapfi_1k.jsonl --output data/generated/rl/policy_value.pt
+python scripts/rl_evaluate_vs_rapfi.py --games 20 --move-timeout 0.05
+```
