@@ -12,7 +12,6 @@ from .rules import (
     RenjuGame,
     RuleMode,
     format_coord,
-    parse_coord,
     would_make_exact_five,
     would_make_overline,
 )
@@ -123,63 +122,6 @@ def score_candidate_move(
     if reply_result in (MoveResult.BLACK_WIN, MoveResult.WHITE_WIN):
         return 0.20
     return 0.50
-
-
-try:
-    import kaggle_benchmarks as kbench
-except Exception:  # pragma: no cover - Kaggle-only dependency
-    kbench = None
-
-
-if kbench is not None:
-
-    @kbench.task(name="renju_next_move")
-    def renju_next_move(
-        llm,
-        board_text: str,
-        side: str,
-        best_moves: list[str],
-        good_moves: list[str] | None = None,
-        blocking_moves: list[str] | None = None,
-        forbidden_moves: list[str] | None = None,
-        mode: str = "strict",
-    ) -> float:
-        board = Board.from_text(board_text)
-        color = BLACK if side.lower() in ("black", "x") else WHITE
-        prompt = (
-            "You are playing Renju on a 15x15 board. Coordinates are A1 through O15. "
-            "X is black and O is white. Black loses by forbidden overline, double-four, "
-            "or forbidden double-three unless black simultaneously makes exactly five. "
-            f"It is {side}'s turn. Return exactly one JSON object like {{\"move\":\"H8\"}}.\n\n{board.to_text()}"
-        )
-        response = llm.prompt(prompt)
-        try:
-            move = extract_first_coord(response)
-        except ValueError:
-            return 0.0
-        answers = {parse_coord(coord) for coord in best_moves}
-        good = {parse_coord(coord) for coord in (good_moves or [])}
-        blocking = {parse_coord(coord) for coord in (blocking_moves or [])}
-        forbidden = {parse_coord_relaxed(coord) for coord in (forbidden_moves or [])}
-        return score_candidate_move(board, color, move, answers, good, blocking, forbidden, mode=mode)
-
-
-    @kbench.task(name="renju_rule_classification")
-    def renju_rule_classification(llm, board_text: str, side: str, move: str, expected: str) -> bool:
-        board = Board.from_text(board_text)
-        prompt = (
-            "Classify this Renju move as one of: legal, win, forbidden, occupied, off_board. "
-            "Use RIF rules: white overline wins, black overline/double-four/forbidden double-three lose "
-            "unless black simultaneously makes exactly five.\n"
-            f"Side: {side}\nMove: {move}\nBoard:\n{board.to_text()}\n"
-            "Return exactly one JSON object like {\"class\":\"legal\"}."
-        )
-        response = llm.prompt(prompt)
-        try:
-            label = extract_label(response)
-        except ValueError:
-            return False
-        return label == expected.lower().replace("-", "_")
 
 
 def describe_move(board_text: str, side: str, move: str) -> str:

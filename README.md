@@ -6,7 +6,8 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 
 - `renju_benchmark/rules.py`: 15x15連珠ルールエンジン
 - `renju_benchmark/rating.py`: Elo風の対戦レーティング集計
-- `renju_benchmark/tasks.py`: Kaggle Benchmarks用タスク例
+- `renju_benchmark/tasks.py`: 採点・応答解析ヘルパー
+- `renju_benchmark/kaggle_tasks.py`: Kaggle Benchmarks用タスクエントリポイント
 - `renju_benchmark/agents.py`: 固定bot
 - `data/public_examples.jsonl`: 公開サンプル
 - `data/puzzles.jsonl`: 開発用の小さな問題セット
@@ -18,6 +19,7 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `docs/rapfi.md`: Rapfi連携メモ
 - `docs/design.md`: ルール・評価設計メモ
 - `docs/scoring.md`: 採点仕様
+- `docs/kaggle.md`: Kaggle Benchmarks連携メモ
 - `tests/`: ルールとレーティングの基本テスト
 
 ## Rule scope
@@ -49,11 +51,15 @@ python scripts/summarize_records.py data/generated/validation_public.jsonl
 
 ## Kaggle Benchmarks usage
 
-Kaggle Notebook上で `kaggle_benchmarks` が使える環境なら、`renju_benchmark/tasks.py`
-の `renju_next_move` と `renju_rule_classification` をベンチタスクとして利用できます。
-`renju_next_move` は大量評価では `mode="fast"`、`renju_rule_classification` は `strict` 相当の少数精密問題に向けています。
-next-moveの採点は `best_moves`, `good_moves`, `blocking_moves`, `forbidden_moves` を使えます。
-Scoring details are documented in `docs/scoring.md`.
+Kaggle Notebook上で `kaggle_benchmarks` が使える環境なら、`renju_benchmark.kaggle_tasks`
+をimportして `renju_next_move` / `renju_rule_classification` 系の `@kbench.task` エントリポイントを登録できます。
+Kaggle向けの薄い入口は `renju_benchmark/kaggle_tasks.py` に置き、再利用可能な採点ロジックは
+`renju_benchmark/tasks.py` に分離しています。
+
+`renju_next_move` は大量評価では `mode="fast"`、禁手・例外を含む精密問題では `mode="strict"` を使います。
+`renju_rule_classification` は strict 相当の少数精密問題に向けています。next-moveの採点は `best_moves`,
+`good_moves`, `blocking_moves`, `forbidden_moves` を使えます。Scoring details are documented in
+`docs/scoring.md`; Kaggle integration details are documented in `docs/kaggle.md`.
 
 ## Rapfi integration
 
