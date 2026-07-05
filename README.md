@@ -16,6 +16,7 @@ Kaggle Benchmarks向けの連珠ベンチ試作です。
 - `scripts/validate_puzzles.py`: JSONL問題の検証
 - `scripts/evaluate_records.py`: 予測JSONLのカテゴリ別集計
 - `scripts/summarize_records.py`: JSONL問題セットの構成集計
+- `scripts/rate_arena_results.py`: model-vs-model対戦結果のElo集計
 - `renju_benchmark/rapfi.py`: Rapfi/Gomocup互換エンジン用のPython wrapper
 - `docs/rapfi.md`: Rapfi連携メモ
 - `docs/design.md`: ルール・評価設計メモ
@@ -73,6 +74,11 @@ kaggle b t push renju-next-move-public -f kaggle_tasks/renju_next_move_public.py
 
 python kaggle_tasks/renju_rule_classification_public.py
 kaggle b t push renju-rule-classification-public -f kaggle_tasks/renju_rule_classification_public.py --wait
+
+kaggle b t push renju-model-arena-public -f kaggle_tasks/renju_model_arena_public.py --wait
+kaggle b t run renju-model-arena-public -m google/gemini-3-flash-preview --wait
+kaggle b t download renju-model-arena-public -o data/generated/arena_results -f
+python scripts/rate_arena_results.py data/generated/arena_results
 ```
 
 ## Rapfi integration

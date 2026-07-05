@@ -86,6 +86,7 @@ kbench`, define exactly one `@kbench.task`, include a return type annotation, an
 
 - `kaggle_tasks/renju_next_move_public.py`
 - `kaggle_tasks/renju_rule_classification_public.py`
+- `kaggle_tasks/renju_model_arena_public.py`
 
 Suggested local validation and push flow:
 
@@ -112,3 +113,35 @@ kaggle b auth -y
 
 The push files are intentionally small public smoke tasks. Larger public/hidden sets should be generated and attached
 as Kaggle datasets later, then read inside the same task-file pattern.
+
+## Model Arena Task
+
+`kaggle_tasks/renju_model_arena_public.py` runs a small model-vs-model Renju match. The model selected by
+`kaggle b t run ... -m` is the candidate model. The opponent is specified in the evaluation row through
+`opponent_model`, currently `anthropic/claude-haiku-4-5@20251001`.
+
+The task returns a structured result:
+
+```json
+{
+  "match_id": "...",
+  "black": "candidate",
+  "white": "anthropic/claude-haiku-4-5@20251001",
+  "result": "black_win",
+  "candidate_score": 1.0,
+  "moves": []
+}
+```
+
+Kaggle Benchmarks records the match output, and Elo-style ratings are computed after downloading results:
+
+```bash
+kaggle b t push renju-model-arena-public -f kaggle_tasks/renju_model_arena_public.py --wait
+kaggle b t run renju-model-arena-public -m google/gemini-3-flash-preview --wait
+kaggle b t run renju-model-arena-public -m anthropic/claude-haiku-4-5@20251001 --wait
+kaggle b t download renju-model-arena-public -o data/generated/arena_results -f
+python scripts/rate_arena_results.py data/generated/arena_results
+```
+
+This is intentionally an experimental arena track, separate from the deterministic next-move and rule-classification
+tasks.

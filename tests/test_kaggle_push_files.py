@@ -7,6 +7,7 @@ from pathlib import Path
 TASK_FILES = (
     Path("kaggle_tasks/renju_next_move_public.py"),
     Path("kaggle_tasks/renju_rule_classification_public.py"),
+    Path("kaggle_tasks/renju_model_arena_public.py"),
 )
 
 
