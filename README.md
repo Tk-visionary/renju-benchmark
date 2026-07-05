@@ -66,6 +66,8 @@ Kaggle CLIでそのままpushする場合は、repo packageに依存しない `k
 
 ```bash
 kaggle b init -y
+# Local `python ...` validation requires the kaggle_benchmarks SDK in your active Python env.
+# If it is not installed locally, skip this step and rely on `kaggle b t push --wait`.
 python kaggle_tasks/renju_next_move_public.py
 kaggle b t push renju-next-move-public -f kaggle_tasks/renju_next_move_public.py --wait
 

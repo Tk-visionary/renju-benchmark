@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 
+.env
+example_task.py
+kaggle_benchmarks_reference.md
+
 data/generated/
 predictions.jsonl
 *.predictions.jsonl

@@ -100,6 +100,10 @@ ls -1 *.run.json
 kaggle b t push renju-rule-classification-public -f kaggle_tasks/renju_rule_classification_public.py --wait
 ```
 
+`python kaggle_tasks/...` requires the `kaggle_benchmarks` SDK in the active local Python environment. If your local
+environment only has the Kaggle CLI, `python ...` can fail with `ModuleNotFoundError: No module named
+'kaggle_benchmarks'`; in that case, the `kaggle b t push ... --wait` path still runs in Kaggle's benchmark environment.
+
 If credentials expire, refresh them with:
 
 ```bash
