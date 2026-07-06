@@ -13,7 +13,7 @@ from renju_benchmark.rl.board_encoding import (
 )
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
-from renju_benchmark.rl.rapfi_env import winner_after_move_result
+from renju_benchmark.rl.rapfi_env import score_for_model, summarize_game_rows, winner_after_move_result
 from renju_benchmark.rl.search import tactical_candidates
 
 
@@ -125,3 +125,23 @@ def test_winner_after_illegal_move_is_opponent() -> None:
     from renju_benchmark.rules import MoveResult, WHITE
 
     assert winner_after_move_result(MoveResult.ILLEGAL_OCCUPIED, BLACK) == WHITE
+
+
+def test_summarize_game_rows_reports_wdl_and_side_scores() -> None:
+    rows = [
+        {"model_color": "black", "winner": BLACK, "result": "black_win"},
+        {"model_color": "white", "winner": BLACK, "result": "black_win"},
+        {"model_color": "black", "winner": None, "result": "max_plies"},
+        {"model_color": "white", "winner": BLACK, "result": "illegal_occupied"},
+    ]
+
+    assert score_for_model(rows[0]) == 1.0
+    assert score_for_model(rows[1]) == 0.0
+    summary = summarize_game_rows(rows)
+    assert summary["games"] == 4
+    assert summary["wins"] == 1
+    assert summary["draws"] == 1
+    assert summary["losses"] == 2
+    assert summary["illegal_rate"] == 0.25
+    assert summary["black_score"] == 0.75
+    assert summary["white_score"] == 0.0

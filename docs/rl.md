@@ -151,6 +151,26 @@ is stable for the chosen setting.
 nearby legal points. This is the default direction for beating weak Rapfi; raw policy-only moves are mainly useful for
 debugging imitation quality.
 
+The evaluator prints a JSON report with aggregate WDL metrics and per-game logs:
+
+```json
+{
+  "summary": {
+    "games": 20,
+    "score": 0.55,
+    "win_rate": 0.4,
+    "draw_rate": 0.3,
+    "loss_rate": 0.3,
+    "illegal_rate": 0.0,
+    "black_score": 0.6,
+    "white_score": 0.5
+  },
+  "games": []
+}
+```
+
+Use `--games-only` if you need the previous raw list format.
+
 For local Rapfi settings, configure the engine through its own config or use a low move timeout:
 
 ```bash

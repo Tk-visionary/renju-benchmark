@@ -14,6 +14,10 @@ class GameResult:
     winner: str | None
 
 
+TERMINAL_DRAW_RESULTS = {"draw", "max_plies"}
+ILLEGAL_RESULTS = {"illegal_occupied", "illegal_off_board", "black_forbidden"}
+
+
 def opponent(color: str) -> str:
     return WHITE if color == BLACK else BLACK
 
@@ -85,3 +89,45 @@ def play_heuristic_vs_rapfi(
         config=config,
         max_plies=max_plies,
     )
+
+
+def score_for_model(row: dict) -> float:
+    model_color = BLACK if row["model_color"] == "black" else WHITE
+    if row.get("winner") == model_color:
+        return 1.0
+    if row.get("winner") in {BLACK, WHITE}:
+        return 0.0
+    if row.get("result") in TERMINAL_DRAW_RESULTS:
+        return 0.5
+    return 0.0
+
+
+def summarize_game_rows(rows: list[dict]) -> dict:
+    total = len(rows)
+    scores = [score_for_model(row) for row in rows]
+    wins = sum(1 for score in scores if score == 1.0)
+    draws = sum(1 for score in scores if score == 0.5)
+    losses = sum(1 for score in scores if score == 0.0)
+    illegal = sum(1 for row in rows if row.get("result") in ILLEGAL_RESULTS)
+    by_side: dict[str, list[float]] = {"black": [], "white": []}
+    for row, score in zip(rows, scores):
+        by_side[row["model_color"]].append(score)
+
+    def mean(values: list[float]) -> float:
+        return sum(values) / len(values) if values else 0.0
+
+    return {
+        "games": total,
+        "score": mean(scores),
+        "wins": wins,
+        "draws": draws,
+        "losses": losses,
+        "win_rate": wins / total if total else 0.0,
+        "draw_rate": draws / total if total else 0.0,
+        "loss_rate": losses / total if total else 0.0,
+        "illegal_rate": illegal / total if total else 0.0,
+        "black_score": mean(by_side["black"]),
+        "white_score": mean(by_side["white"]),
+        "black_games": len(by_side["black"]),
+        "white_games": len(by_side["white"]),
+    }

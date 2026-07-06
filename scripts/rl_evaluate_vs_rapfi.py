@@ -11,7 +11,7 @@ from renju_benchmark.agents import heuristic_move
 from renju_benchmark.rapfi import RapfiConfig
 from renju_benchmark.rules import BLACK, WHITE
 from renju_benchmark.rl.inference import PolicyValueAgent
-from renju_benchmark.rl.rapfi_env import play_vs_rapfi
+from renju_benchmark.rl.rapfi_env import play_vs_rapfi, summarize_game_rows
 
 
 def main() -> None:
@@ -29,6 +29,7 @@ def main() -> None:
     parser.add_argument("--tactical", action="store_true")
     parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--reuse-rapfi-process", action="store_true")
+    parser.add_argument("--games-only", action="store_true")
     args = parser.parse_args()
 
     config = None
@@ -70,7 +71,8 @@ def main() -> None:
             "winner": result.winner,
             "moves": result.moves,
         })
-    print(json.dumps(rows, indent=2))
+    output = rows if args.games_only else {"summary": summarize_game_rows(rows), "games": rows}
+    print(json.dumps(output, indent=2, sort_keys=not args.games_only))
 
 
 if __name__ == "__main__":
