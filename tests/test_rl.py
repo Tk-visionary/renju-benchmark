@@ -23,6 +23,7 @@ from renju_benchmark.rl.search import (
     tactical_heuristic_move,
     winning_threat_count,
 )
+from renju_benchmark.rl.symbolic import fit_pairwise_weights, rank_symbolic_moves, symbolic_move
 
 
 def board_from_points(points: list[tuple[str, str]]) -> Board:
@@ -68,6 +69,26 @@ def test_tactical_candidates_prioritize_immediate_win() -> None:
 
     assert parse_coord("E8") in candidates
     assert parse_coord("J8") in candidates
+
+
+def test_symbolic_move_prioritizes_immediate_win() -> None:
+    board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK), ("I8", BLACK)])
+    assert symbolic_move(board, BLACK) in {parse_coord("E8"), parse_coord("J8")}
+
+
+def test_symbolic_pairwise_fit_updates_weights() -> None:
+    board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK)])
+    examples = [{
+        "board": board.to_text(),
+        "side": "black",
+        "best_move": "E8",
+        "policy_index": coord_to_index("E8"),
+    }]
+    weights = fit_pairwise_weights(examples, epochs=1, learning_rate=0.5)
+    ranked = rank_symbolic_moves(board, BLACK, weights=weights)
+
+    assert ranked
+    assert isinstance(weights["center"], float)
 
 
 def test_tactical_candidates_with_roles_marks_single_block_safe() -> None:

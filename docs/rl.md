@@ -155,6 +155,27 @@ python scripts/rl_train_imitation.py \
 The first comparison target is HRM versus the default ResNet on tactical labels, then Rapfi imitation labels. HRM should
 be treated as a policy/value and tactical-feature model; it still needs tactical filtering or search for play.
 
+## Symbolic Rule Learning
+
+The non-neural route is to learn weights over interpretable tactical rules. This keeps the engine debuggable while still
+allowing Rapfi/tactical labels to improve move ordering:
+
+```bash
+python scripts/rl_fit_symbolic.py \
+  --input data/generated/rl/tactical_1k.jsonl \
+  --output data/generated/rl/symbolic_weights.json \
+  --epochs 5
+
+python scripts/rl_eval_symbolic.py \
+  --input data/generated/rl/tactical_1k.jsonl \
+  --weights data/generated/rl/symbolic_weights.json
+```
+
+The first implementation scores tactical roles such as immediate win, block, force-win, threat, unsafe, center bias,
+edge distance, self/opponent run length, and open ends. This is the starting point for a learned rule-based engine:
+feature weights, rule ordering, candidate thresholds, and search limits can be optimized without training a neural
+network.
+
 ## Evaluation Against Rapfi
 
 The first evaluation target is a baseline move function versus weak Rapfi settings:
