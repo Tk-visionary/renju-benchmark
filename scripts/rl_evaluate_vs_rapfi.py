@@ -29,6 +29,7 @@ def main() -> None:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--tactical", action="store_true")
     parser.add_argument("--candidate-limit", type=int, default=32)
+    parser.add_argument("--force-reply-limit", type=int, default=16)
     parser.add_argument("--reuse-rapfi-process", action="store_true")
     parser.add_argument("--games-only", action="store_true")
     args = parser.parse_args()
@@ -50,12 +51,22 @@ def main() -> None:
         color = BLACK if game_index % 2 == 0 else WHITE
         if agent is None and args.tactical:
             def move_fn(board, side):
-                return tactical_heuristic_move(board, side, limit=args.candidate_limit)
+                return tactical_heuristic_move(
+                    board,
+                    side,
+                    limit=args.candidate_limit,
+                    force_reply_limit=args.force_reply_limit,
+                )
         elif agent is None:
             move_fn = heuristic_move
         elif args.tactical:
             def move_fn(board, side):
-                return agent.tactical_move(board, side, limit=args.candidate_limit)
+                return agent.tactical_move(
+                    board,
+                    side,
+                    limit=args.candidate_limit,
+                    force_reply_limit=args.force_reply_limit,
+                )
         else:
             move_fn = agent.move
         result = play_vs_rapfi(

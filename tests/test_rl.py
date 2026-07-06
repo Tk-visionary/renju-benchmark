@@ -132,7 +132,7 @@ def test_tactical_heuristic_avoids_allowing_rapfi_double_threat() -> None:
         ("H11", WHITE),
         ("F8", WHITE),
     ])
-    move = tactical_heuristic_move(board, BLACK)
+    move = tactical_heuristic_move(board, BLACK, force_reply_limit=64)
 
     assert parse_coord("I5") in opponent_force_win_replies(board, BLACK, parse_coord("I7"))
     assert parse_coord("I5") not in opponent_force_win_replies(board, BLACK, move)

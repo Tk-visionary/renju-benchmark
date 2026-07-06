@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--games", type=int, default=2)
     parser.add_argument("--max-plies", type=int, default=120)
     parser.add_argument("--candidate-limit", type=int, default=32)
+    parser.add_argument("--force-reply-limit", type=int, default=16)
     parser.add_argument("--policy-tactical", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--games-only", action="store_true")
     args = parser.parse_args()
@@ -28,11 +29,21 @@ def main() -> None:
 
     def policy_move(board, side):
         if args.policy_tactical:
-            return agent.tactical_move(board, side, limit=args.candidate_limit)
+            return agent.tactical_move(
+                board,
+                side,
+                limit=args.candidate_limit,
+                force_reply_limit=args.force_reply_limit,
+            )
         return agent.move(board, side)
 
     def baseline_move(board, side):
-        return tactical_heuristic_move(board, side, limit=args.candidate_limit)
+        return tactical_heuristic_move(
+            board,
+            side,
+            limit=args.candidate_limit,
+            force_reply_limit=args.force_reply_limit,
+        )
 
     rows = []
     for game_index in range(args.games):

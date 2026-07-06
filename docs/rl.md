@@ -165,6 +165,7 @@ is stable for the chosen setting.
 nearby legal points. It prioritizes double threats that create multiple next-turn wins, then single winning threats, and
 filters out moves that allow an immediate winning reply when there is a safer candidate. This is the default direction
 for beating weak Rapfi; raw policy-only moves are mainly useful for debugging imitation quality.
+Use `--force-reply-limit` to trade speed for deeper checks of opponent double-threat replies.
 
 If `--tactical` is used without `--checkpoint`, the evaluator runs the same role-prioritized tactical search as a
 deterministic baseline. Use this to compare the learned policy against the hand-written tactical floor.

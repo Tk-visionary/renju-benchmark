@@ -42,6 +42,7 @@ def main() -> None:
     parser.add_argument("--tactical-max-plies", type=int, default=60)
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--candidate-limit", type=int, default=32)
+    parser.add_argument("--force-reply-limit", type=int, default=16)
     parser.add_argument("--rapfi-path", type=Path, default=Path("external/rapfi-runtime/pbrain-rapfi"))
     parser.add_argument("--rapfi-cwd", type=Path, default=Path("external/rapfi-runtime"))
     parser.add_argument("--move-timeout", type=float, default=10.0)
@@ -103,6 +104,7 @@ def main() -> None:
             "--min-plies", str(args.min_plies),
             "--max-plies", str(args.max_plies),
             "--candidate-limit", str(args.candidate_limit),
+            "--force-reply-limit", str(args.force_reply_limit),
         ])
         train_inputs.append(read_jsonl_block(tactical_dataset))
     train_inputs.append(read_jsonl_block(dataset))
@@ -131,6 +133,7 @@ def main() -> None:
         "--games", str(args.tactical_games),
         "--max-plies", str(args.tactical_max_plies),
         "--candidate-limit", str(args.candidate_limit),
+        "--force-reply-limit", str(args.force_reply_limit),
     ])
     eval_command = [
         sys.executable,

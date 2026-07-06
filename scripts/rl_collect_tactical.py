@@ -22,6 +22,7 @@ def main() -> None:
     parser.add_argument("--min-plies", type=int, default=4)
     parser.add_argument("--max-plies", type=int, default=30)
     parser.add_argument("--candidate-limit", type=int, default=32)
+    parser.add_argument("--force-reply-limit", type=int, default=16)
     args = parser.parse_args()
 
     rng = random.Random(args.seed)
@@ -32,7 +33,12 @@ def main() -> None:
         attempts += 1
         board, turn, _history = random_reachable_position(rng, rng.randint(args.min_plies, args.max_plies))
         try:
-            move = tactical_heuristic_move(board, turn, limit=args.candidate_limit)
+            move = tactical_heuristic_move(
+                board,
+                turn,
+                limit=args.candidate_limit,
+                force_reply_limit=args.force_reply_limit,
+            )
         except ValueError:
             continue
         coord = format_coord(*move)
