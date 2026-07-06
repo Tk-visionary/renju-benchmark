@@ -50,9 +50,9 @@ python scripts/rl_collect_rapfi.py \
   --max-node 1000
 ```
 
-Current integration note: the built Rapfi runtime has been verified to answer an empty-board `BEGIN`/best-move query.
-Intermediate-position annotation through Gomocup `BOARD`/`YXBOARD` still needs protocol tuning before large-scale
-teacher-data collection is considered reliable.
+Current integration note: the built Rapfi runtime has been verified for empty-board and intermediate-position
+best-move annotation. Rapfi may emit the best move as a PV in `MESSAGE Depth ... | H5 ...` rather than a raw `x,y`
+line, and the Python wrapper handles both formats.
 
 Each row contains:
 
@@ -75,6 +75,12 @@ python scripts/rl_train_imitation.py \
   --input data/generated/rl/rapfi_1k.jsonl \
   --output data/generated/rl/policy_value.pt \
   --epochs 3
+```
+
+Smoke-test a trained checkpoint:
+
+```bash
+python scripts/rl_policy_move.py data/generated/rl/policy_value.pt board.txt --side black
 ```
 
 The first model is intentionally small:

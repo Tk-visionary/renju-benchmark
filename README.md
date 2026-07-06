@@ -110,5 +110,6 @@ Rapfiを教師・対戦相手として使い、弱設定Rapfiに勝つcompact po
 export RAPFI_PATH=/path/to/rapfi
 python scripts/rl_collect_rapfi.py --count 1000 --output data/generated/rl/rapfi_1k.jsonl
 python scripts/rl_train_imitation.py --input data/generated/rl/rapfi_1k.jsonl --output data/generated/rl/policy_value.pt
+python scripts/rl_policy_move.py data/generated/rl/policy_value.pt board.txt --side black
 python scripts/rl_evaluate_vs_rapfi.py --games 20 --move-timeout 0.05
 ```

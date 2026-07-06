@@ -78,3 +78,23 @@ def test_build_model_reports_missing_torch_cleanly(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr("builtins.__import__", fake_import)
     with pytest.raises(RuntimeError, match="PyTorch is required"):
         build_model()
+
+
+def test_policy_value_agent_checkpoint_roundtrip(tmp_path) -> None:
+    torch = pytest.importorskip("torch")
+    from renju_benchmark.rl.inference import PolicyValueAgent
+
+    checkpoint = tmp_path / "model.pt"
+    config = ModelConfig(channels=8, residual_blocks=1)
+    model = build_model(config)
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "config": {"channels": config.channels, "resblocks": config.residual_blocks},
+        },
+        checkpoint,
+    )
+
+    agent = PolicyValueAgent(checkpoint)
+    move = agent.move(Board.empty(), "black")
+    assert Board.empty().in_bounds(*move)

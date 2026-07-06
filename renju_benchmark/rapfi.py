@@ -155,31 +155,56 @@ def _iter_stones(board: Board):
 
 
 def _parse_engine_move(response: str) -> tuple[int, int]:
-    first = response.split()[0]
+    first = _extract_move_token(response)
     parts = first.split(",")
-    if len(parts) < 2:
-        raise RapfiError(f"could not parse Rapfi move: {response!r}")
-    try:
-        col = int(parts[0])
-        row = int(parts[1])
-    except ValueError as exc:
-        raise RapfiError(f"could not parse Rapfi move: {response!r}") from exc
+    if len(parts) >= 2:
+        try:
+            col = int(parts[0])
+            row = int(parts[1])
+        except ValueError as exc:
+            raise RapfiError(f"could not parse Rapfi move: {response!r}") from exc
+    else:
+        col = ord(first[0].lower()) - ord("a")
+        try:
+            row = int(first[1:]) - 1
+        except ValueError as exc:
+            raise RapfiError(f"could not parse Rapfi move: {response!r}") from exc
     if not (0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE):
         raise RapfiError(f"Rapfi returned off-board move: {response!r}")
     return row, col
 
 
 def _looks_like_engine_move(response: str) -> bool:
-    first = response.split()[0] if response.split() else ""
+    first = _extract_move_token(response, raise_on_missing=False)
+    if not first:
+        return False
     parts = first.split(",")
-    if len(parts) < 2:
+    if len(parts) >= 2:
+        try:
+            int(parts[0])
+            int(parts[1])
+        except ValueError:
+            return False
+        return True
+    if len(first) < 2 or not ("A" <= first[0].upper() <= "O"):
         return False
-    try:
-        int(parts[0])
-        int(parts[1])
-    except ValueError:
-        return False
-    return True
+    return first[1:].isdigit()
+
+
+def _extract_move_token(response: str, raise_on_missing: bool = True) -> str:
+    tokens = response.split()
+    if not tokens:
+        if raise_on_missing:
+            raise RapfiError(f"could not parse Rapfi move: {response!r}")
+        return ""
+    first = tokens[0]
+    if "," in first:
+        return first
+    if first.upper() == "MESSAGE" and "|" in tokens:
+        pipe = len(tokens) - 1 - tokens[::-1].index("|")
+        if pipe + 1 < len(tokens):
+            return tokens[pipe + 1]
+    return first
 
 
 def rapfi_move(board: Board, color: str, config: RapfiConfig | None = None) -> tuple[int, int]:

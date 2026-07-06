@@ -5,6 +5,7 @@ from renju_benchmark.rapfi import RapfiConfig, RapfiError, _looks_like_engine_mo
 
 def test_parse_engine_move() -> None:
     assert _parse_engine_move("7,8") == (8, 7)
+    assert _parse_engine_move("MESSAGE Depth 2-3 | Eval -415 | Time 0ms | H5 G8") == (4, 7)
 
 
 def test_parse_engine_move_rejects_off_board() -> None:
@@ -14,6 +15,7 @@ def test_parse_engine_move_rejects_off_board() -> None:
 
 def test_looks_like_engine_move() -> None:
     assert _looks_like_engine_move("7,8")
+    assert _looks_like_engine_move("MESSAGE Depth 2-3 | Eval -415 | Time 0ms | H5 G8")
     assert not _looks_like_engine_move("MESSAGE loading")
 
 

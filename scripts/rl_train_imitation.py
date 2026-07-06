@@ -46,10 +46,19 @@ def main() -> None:
         print(f"epoch={epoch + 1} loss={total_loss / max(1, x.shape[0]):.4f}")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"model_state": model.state_dict(), "config": vars(args)}, args.output)
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "config": {
+                "channels": args.channels,
+                "resblocks": args.resblocks,
+                "input_channels": x.shape[1],
+            },
+        },
+        args.output,
+    )
     print(f"wrote checkpoint to {args.output}")
 
 
 if __name__ == "__main__":
     main()
-
