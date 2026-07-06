@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--max-plies", type=int, default=30)
     parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--force-reply-limit", type=int, default=16)
+    parser.add_argument("--threat-forbidden-depth", type=int, default=2)
     args = parser.parse_args()
 
     rng = random.Random(args.seed)
@@ -38,6 +39,7 @@ def main() -> None:
                 turn,
                 limit=args.candidate_limit,
                 force_reply_limit=args.force_reply_limit,
+                threat_forbidden_depth=args.threat_forbidden_depth,
             )
         except ValueError:
             continue

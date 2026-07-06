@@ -95,6 +95,7 @@ def tactical_candidates_with_roles(
     radius: int = 2,
     limit: int = 32,
     force_reply_limit: int = 16,
+    threat_forbidden_depth: int = 2,
 ) -> list[TacticalMove]:
     moves = tactical_candidates(board, color, radius=radius, limit=max(limit * 2, limit))
     immediate_wins = set(winning_moves(board, color))
@@ -127,7 +128,7 @@ def tactical_candidates_with_roles(
             ):
                 role = "unsafe"
             else:
-                threats = winning_threat_count(board, color, move)
+                threats = winning_threat_count(board, color, move, forbidden_depth=threat_forbidden_depth)
                 if threats >= 2:
                     role = "force_win"
                 elif threats == 1:
@@ -144,8 +145,15 @@ def tactical_heuristic_move(
     color: str,
     limit: int = 32,
     force_reply_limit: int = 16,
+    threat_forbidden_depth: int = 2,
 ) -> tuple[int, int]:
-    candidates = tactical_candidates_with_roles(board, color, limit=limit, force_reply_limit=force_reply_limit)
+    candidates = tactical_candidates_with_roles(
+        board,
+        color,
+        limit=limit,
+        force_reply_limit=force_reply_limit,
+        threat_forbidden_depth=threat_forbidden_depth,
+    )
     if not candidates:
         raise ValueError("no tactical candidates")
     center = (7, 7)

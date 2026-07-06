@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--margin", type=float, default=1.0)
     parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--force-reply-limit", type=int, default=16)
+    parser.add_argument("--threat-forbidden-depth", type=int, default=2)
     args = parser.parse_args()
 
     examples = load_examples(args.input)
@@ -30,6 +31,7 @@ def main() -> None:
         margin=args.margin,
         limit=args.candidate_limit,
         force_reply_limit=args.force_reply_limit,
+        threat_forbidden_depth=args.threat_forbidden_depth,
     )
     save_weights(weights, args.output)
     print(json.dumps({"examples": len(examples), "output": str(args.output), "weights": weights}, indent=2, sort_keys=True))

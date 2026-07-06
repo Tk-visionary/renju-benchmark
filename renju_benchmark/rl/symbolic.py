@@ -86,6 +86,7 @@ def rank_symbolic_moves(
     weights: dict[str, float] | None = None,
     limit: int = 32,
     force_reply_limit: int = 16,
+    threat_forbidden_depth: int = 2,
 ) -> list[SymbolicMove]:
     active_weights = weights or DEFAULT_WEIGHTS
     items = tactical_candidates_with_roles(
@@ -93,6 +94,7 @@ def rank_symbolic_moves(
         color,
         limit=limit,
         force_reply_limit=force_reply_limit,
+        threat_forbidden_depth=threat_forbidden_depth,
     )
     ranked = []
     for item in items:
@@ -112,6 +114,7 @@ def symbolic_move(
     weights: dict[str, float] | None = None,
     limit: int = 32,
     force_reply_limit: int = 16,
+    threat_forbidden_depth: int = 2,
 ) -> tuple[int, int]:
     ranked = rank_symbolic_moves(
         board,
@@ -119,6 +122,7 @@ def symbolic_move(
         weights=weights,
         limit=limit,
         force_reply_limit=force_reply_limit,
+        threat_forbidden_depth=threat_forbidden_depth,
     )
     if not ranked:
         raise ValueError("no symbolic candidates")
@@ -132,6 +136,7 @@ def fit_pairwise_weights(
     margin: float = 1.0,
     limit: int = 32,
     force_reply_limit: int = 16,
+    threat_forbidden_depth: int = 2,
 ) -> dict[str, float]:
     from renju_benchmark.rules import parse_coord
     from renju_benchmark.rl.board_encoding import side_to_color
@@ -148,6 +153,7 @@ def fit_pairwise_weights(
                 weights=weights,
                 limit=limit,
                 force_reply_limit=force_reply_limit,
+                threat_forbidden_depth=threat_forbidden_depth,
             )
             if not ranked:
                 continue

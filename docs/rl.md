@@ -176,6 +176,24 @@ edge distance, self/opponent run length, and open ends. This is the starting poi
 feature weights, rule ordering, candidate thresholds, and search limits can be optimized without training a neural
 network.
 
+For a benchmark-derived sanity check, generate next-move records and convert them into imitation examples:
+
+```bash
+python scripts/generate_puzzles.py \
+  --seed 92 \
+  --count-per-family 50 \
+  --output data/generated/rl/symbolic_benchmark_records_50pf.jsonl
+
+python scripts/rl_convert_next_move_records.py \
+  --input data/generated/rl/symbolic_benchmark_records_50pf.jsonl \
+  --output data/generated/rl/symbolic_benchmark_next_50pf.jsonl
+```
+
+On a 300/100 split of that 400-example next-move set, the symbolic learner improved the held-out test slice from
+top-1 `0.64` / top-5 `0.88` to top-1 `0.78` / top-5 `0.96` with `--candidate-limit 32`,
+`--force-reply-limit 4`, and `--threat-forbidden-depth 0`. The depth-0 setting is a fast diagnostic mode; use the
+default depth for stricter tactical labels.
+
 ## Evaluation Against Rapfi
 
 The first evaluation target is a baseline move function versus weak Rapfi settings:

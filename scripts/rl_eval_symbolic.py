@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--force-reply-limit", type=int, default=16)
+    parser.add_argument("--threat-forbidden-depth", type=int, default=2)
     args = parser.parse_args()
 
     weights = load_weights(args.weights) if args.weights else None
@@ -38,6 +39,7 @@ def main() -> None:
             weights=weights,
             limit=args.candidate_limit,
             force_reply_limit=args.force_reply_limit,
+            threat_forbidden_depth=args.threat_forbidden_depth,
         )
         ranked_moves = [item.move for item in ranked]
         if target not in ranked_moves:
