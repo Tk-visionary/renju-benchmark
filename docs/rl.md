@@ -198,6 +198,9 @@ Initial local timing on an 8-channel, 1-cycle, 1-low-step HRM:
 
 - 4 games x 20 plies: 80 positions, self-play collection about 1.3 seconds, 1 training epoch about 1.8 seconds.
 - 32 games x 20 plies: 640 positions, self-play collection about 4.1 seconds, 1 training epoch about 4.1 seconds.
+- Batched collection with `--parallel-games 32` reduces 32 games x 20 plies from about 4.3 seconds to 3.7 seconds.
+- Batched collection with `--parallel-games 32` reduces 128 games x 20 plies from about 13.5 seconds to 11.6 seconds.
+- 128 games x 20 plies with batched collection plus 1 training epoch is about 27.8 seconds total.
 
 The self-play collector keeps one model process in memory and reseeds the sampler per game. Early experiments should
 stay with small HRM settings and short `--max-plies`; once the loop shows learning signal, the next speed target is the

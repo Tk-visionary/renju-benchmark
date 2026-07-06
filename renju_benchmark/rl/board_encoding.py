@@ -45,6 +45,11 @@ def index_to_coord(index: int) -> str:
 
 def legal_policy_mask(board: Board, color: str, local_only: bool = False, forbidden_depth: int = 2) -> list[float]:
     mask = [0.0] * (BOARD_SIZE * BOARD_SIZE)
+    if color == WHITE:
+        points = board.neighbor_empty_points() if local_only else board.empty_points()
+        for move in points:
+            mask[move_to_index(move)] = 1.0
+        return mask
     for move in legal_moves(board, color, local_only=local_only, forbidden_depth=forbidden_depth):
         mask[move_to_index(move)] = 1.0
     return mask
@@ -55,6 +60,7 @@ def encode_position(
     side: str,
     last_move: tuple[int, int] | None = None,
     forbidden_depth: int = 2,
+    local_only: bool = False,
 ) -> EncodedPosition:
     color = side_to_color(side)
     planes = [
@@ -72,7 +78,7 @@ def encode_position(
         for col in range(BOARD_SIZE):
             planes[2][row][col] = side_value
 
-    mask = legal_policy_mask(board, color, forbidden_depth=forbidden_depth)
+    mask = legal_policy_mask(board, color, local_only=local_only, forbidden_depth=forbidden_depth)
     for index, value in enumerate(mask):
         row, col = index_to_move(index)
         planes[3][row][col] = value
@@ -88,4 +94,3 @@ def encode_position(
         planes=planes,
         legal_policy_mask=mask,
     )
-

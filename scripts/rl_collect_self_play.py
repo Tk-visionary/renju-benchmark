@@ -23,6 +23,8 @@ def main() -> None:
     parser.add_argument("--epsilon", type=float, default=0.1)
     parser.add_argument("--max-plies", type=int, default=120)
     parser.add_argument("--forbidden-depth", type=int, default=2)
+    parser.add_argument("--local-legal-only", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--parallel-games", type=int, default=16)
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
 
@@ -34,6 +36,8 @@ def main() -> None:
         epsilon=args.epsilon,
         max_plies=args.max_plies,
         forbidden_depth=args.forbidden_depth,
+        local_legal_only=args.local_legal_only,
+        parallel_games=args.parallel_games,
         seed=args.seed,
     )
     rows = collect_self_play(args.checkpoint, args.output, args.games, config, device=args.device)

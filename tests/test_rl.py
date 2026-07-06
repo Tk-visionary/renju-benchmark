@@ -23,7 +23,13 @@ from renju_benchmark.rl.search import (
     tactical_heuristic_move,
     winning_threat_count,
 )
-from renju_benchmark.rl.self_play import MaskedPolicyPlayer, SelfPlayConfig, play_self_game, random_checkpoint
+from renju_benchmark.rl.self_play import (
+    MaskedPolicyPlayer,
+    SelfPlayConfig,
+    collect_self_play,
+    play_self_game,
+    random_checkpoint,
+)
 from renju_benchmark.rl.symbolic import fit_pairwise_weights, rank_symbolic_moves, symbolic_move
 
 
@@ -276,6 +282,27 @@ def test_masked_hrm_self_play_never_returns_illegal(tmp_path) -> None:
     assert rows
     assert {row["game_result"] for row in rows}.isdisjoint({"illegal_occupied", "illegal_off_board", "black_forbidden"})
     assert all(-1.0 <= row["value"] <= 1.0 for row in rows)
+
+
+def test_batched_masked_hrm_self_play_never_returns_illegal(tmp_path) -> None:
+    pytest.importorskip("torch")
+
+    checkpoint = tmp_path / "random_hrm.pt"
+    output = tmp_path / "selfplay.jsonl"
+    config = SelfPlayConfig(
+        channels=8,
+        hrm_cycles=1,
+        hrm_low_steps=1,
+        max_plies=6,
+        seed=123,
+        parallel_games=4,
+    )
+    random_checkpoint(checkpoint, config)
+    rows = collect_self_play(checkpoint, output, games=4, config=config)
+
+    assert len(rows) == 24
+    assert output.exists()
+    assert {row["game_result"] for row in rows}.isdisjoint({"illegal_occupied", "illegal_off_board", "black_forbidden"})
 
 
 def test_policy_value_agent_tactical_move_prioritizes_win(tmp_path) -> None:
