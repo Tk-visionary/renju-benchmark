@@ -194,6 +194,16 @@ This is intentionally weak at first. The goal is to establish a closed loop: ran
 with final outcome values, HRM policy/value update, then next self-play generation. Tactical labels or symbolic rules can
 be mixed in later, but Rapfi is not required for the loop.
 
+Initial local timing on an 8-channel, 1-cycle, 1-low-step HRM:
+
+- 4 games x 20 plies: 80 positions, self-play collection about 1.3 seconds, 1 training epoch about 1.8 seconds.
+- 32 games x 20 plies: 640 positions, self-play collection about 4.1 seconds, 1 training epoch about 4.1 seconds.
+
+The self-play collector keeps one model process in memory and reseeds the sampler per game. Early experiments should
+stay with small HRM settings and short `--max-plies`; once the loop shows learning signal, the next speed target is the
+strict legality path. The Python rule engine is good for correctness, but larger self-play runs should move hot legality
+checks behind a compiled extension or a bitboard-backed implementation while keeping the same Python API.
+
 ## Symbolic Rule Learning
 
 The non-neural route is to learn weights over interpretable tactical rules. This keeps the engine debuggable while still

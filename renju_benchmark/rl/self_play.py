@@ -146,10 +146,10 @@ def collect_self_play(
     device: str = "cpu",
 ) -> list[dict]:
     rows = []
+    player = MaskedPolicyPlayer(checkpoint, config, device=device)
     for game_index in range(games):
-        game_config = SelfPlayConfig(**{**config.__dict__, "seed": config.seed + game_index})
-        player = MaskedPolicyPlayer(checkpoint, game_config, device=device)
-        rows.extend(play_self_game(player, mode=game_config.forbidden_depth))
+        player.rng.seed(config.seed + game_index)
+        rows.extend(play_self_game(player, mode=config.forbidden_depth))
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
     return rows
