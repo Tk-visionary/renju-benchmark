@@ -27,6 +27,7 @@ def summarize_metrics(path: Path) -> dict[str, Any]:
         "metrics": str(path),
         "count": config.get("count") if isinstance(config, dict) else None,
         "tactical_count": config.get("tactical_count") if isinstance(config, dict) else None,
+        "model_type": config.get("model_type") if isinstance(config, dict) else None,
         "epochs": config.get("epochs") if isinstance(config, dict) else None,
         "channels": config.get("channels") if isinstance(config, dict) else None,
         "resblocks": config.get("resblocks") if isinstance(config, dict) else None,
