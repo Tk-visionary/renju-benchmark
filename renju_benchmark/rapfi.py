@@ -109,19 +109,27 @@ class RapfiEngine:
         self._drain_pending_output()
         self._send("BOARD")
         for row, col, stone in history:
-            player = 1 if stone == color else 2
+            player = 1 if stone == BLACK else 2
             self._send(f"{col},{row},{player}")
         self._send("DONE")
-        responses = self._read_move_responses()
+        responses = []
         last_error: RapfiError | None = None
-        for response in responses:
+        for _attempt in range(4):
             try:
-                move = _parse_engine_move(response)
-            except RapfiError as exc:
-                last_error = exc
-                continue
-            if move not in occupied:
-                return move
+                responses.extend(self._read_move_responses(timeout=None if _attempt == 0 else 0.1))
+            except RapfiError:
+                if responses:
+                    break
+                raise
+            for response in responses:
+                try:
+                    move = _parse_engine_move(response)
+                except RapfiError as exc:
+                    last_error = exc
+                    continue
+                if move not in occupied:
+                    self._drain_pending_output(timeout=0.02)
+                    return move
         if last_error is not None:
             raise last_error
         raise RapfiError(f"Rapfi returned no legal move candidates: {responses!r}")
@@ -150,11 +158,11 @@ class RapfiEngine:
             if line.upper().startswith("ERROR"):
                 raise RapfiError(line)
 
-    def _read_move_responses(self) -> list[str]:
+    def _read_move_responses(self, timeout: float | None = None) -> list[str]:
         candidates: list[str] = []
         while True:
             try:
-                line = self._readline()
+                line = self._readline(timeout=timeout)
             except RapfiError:
                 if candidates:
                     return candidates
@@ -176,14 +184,15 @@ class RapfiEngine:
             raise RapfiError("Rapfi process is not running")
         return self.process.stdout
 
-    def _drain_pending_output(self) -> None:
+    def _drain_pending_output(self, timeout: float = 0.0) -> None:
         stdout = self._stdout()
         while True:
-            ready, _, _ = select.select([stdout], [], [], 0)
+            ready, _, _ = select.select([stdout], [], [], timeout)
             if not ready:
                 return
             if stdout.readline() == "":
                 return
+            timeout = 0.0
 
 
 def _iter_stones(board: Board):
