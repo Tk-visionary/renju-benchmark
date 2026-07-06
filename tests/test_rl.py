@@ -17,6 +17,7 @@ from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
 from renju_benchmark.rl.rapfi_env import play_match, score_for_model, summarize_game_rows, winner_after_move_result
 from renju_benchmark.rl.search import (
+    opponent_force_win_replies,
     tactical_candidates,
     tactical_candidates_with_roles,
     tactical_heuristic_move,
@@ -82,7 +83,7 @@ def test_tactical_candidates_with_roles_marks_single_block_safe() -> None:
     assert roles[parse_coord("J8")] == "block"
 
 
-def test_tactical_candidates_with_roles_marks_unblockable_open_four_unsafe() -> None:
+def test_tactical_candidates_with_roles_keeps_open_four_blocks() -> None:
     board = board_from_points([
         ("F8", WHITE),
         ("G8", WHITE),
@@ -91,8 +92,50 @@ def test_tactical_candidates_with_roles_marks_unblockable_open_four_unsafe() -> 
     ])
     roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
 
-    assert roles[parse_coord("E8")] == "unsafe"
-    assert roles[parse_coord("J8")] == "unsafe"
+    assert roles[parse_coord("E8")] == "block"
+    assert roles[parse_coord("J8")] == "block"
+
+
+def test_tactical_heuristic_blocks_rapfi_loss_diagonal() -> None:
+    board = board_from_points([
+        ("H8", BLACK),
+        ("H7", BLACK),
+        ("G8", BLACK),
+        ("H9", BLACK),
+        ("H10", BLACK),
+        ("I9", BLACK),
+        ("I7", BLACK),
+        ("G7", WHITE),
+        ("I8", WHITE),
+        ("F9", WHITE),
+        ("H6", WHITE),
+        ("H11", WHITE),
+        ("F8", WHITE),
+        ("I5", WHITE),
+    ])
+
+    assert tactical_heuristic_move(board, BLACK) in {parse_coord("E9"), parse_coord("J4")}
+
+
+def test_tactical_heuristic_avoids_allowing_rapfi_double_threat() -> None:
+    board = board_from_points([
+        ("H8", BLACK),
+        ("H7", BLACK),
+        ("G8", BLACK),
+        ("H9", BLACK),
+        ("H10", BLACK),
+        ("I9", BLACK),
+        ("G7", WHITE),
+        ("I8", WHITE),
+        ("F9", WHITE),
+        ("H6", WHITE),
+        ("H11", WHITE),
+        ("F8", WHITE),
+    ])
+    move = tactical_heuristic_move(board, BLACK)
+
+    assert parse_coord("I5") in opponent_force_win_replies(board, BLACK, parse_coord("I7"))
+    assert parse_coord("I5") not in opponent_force_win_replies(board, BLACK, move)
 
 
 def test_tactical_candidates_with_roles_marks_winning_threat() -> None:

@@ -32,9 +32,29 @@ def opponent_winning_replies(board: Board, color: str, move: tuple[int, int]) ->
     return winning_moves(next_board, opponent(color), forbidden_depth=0)
 
 
-def winning_threat_count(board: Board, color: str, move: tuple[int, int]) -> int:
+def winning_threat_count(board: Board, color: str, move: tuple[int, int], forbidden_depth: int = 2) -> int:
     next_board = board.place(*move, color)
-    return len(winning_moves(next_board, color, forbidden_depth=2))
+    return len(winning_moves(next_board, color, forbidden_depth=forbidden_depth))
+
+
+def opponent_force_win_replies(
+    board: Board,
+    color: str,
+    move: tuple[int, int],
+    limit: int = 64,
+) -> list[tuple[int, int]]:
+    next_board = board.place(*move, color)
+    other = opponent(color)
+    replies = []
+    center = (7, 7)
+    candidate_replies = sorted(
+        legal_moves(next_board, other, local_only=True, forbidden_depth=0),
+        key=lambda item: abs(item[0] - center[0]) + abs(item[1] - center[1]),
+    )
+    for reply in candidate_replies[:limit]:
+        if winning_threat_count(next_board, other, reply, forbidden_depth=0) >= 2:
+            replies.append(reply)
+    return replies
 
 
 def tactical_candidates(board: Board, color: str, radius: int = 2, limit: int = 32) -> list[tuple[int, int]]:
@@ -97,14 +117,15 @@ def tactical_candidates_with_roles(
     }
     for move in moves:
         role = "block" if move in blocks else "safe"
-        if opponent_winning_replies(board, color, move):
-            role = "unsafe"
-        elif role == "safe":
-            threats = winning_threat_count(board, color, move)
-            if threats >= 2:
-                role = "force_win"
-            elif threats == 1:
-                role = "threat"
+        if role != "block":
+            if opponent_winning_replies(board, color, move) or opponent_force_win_replies(board, color, move):
+                role = "unsafe"
+            else:
+                threats = winning_threat_count(board, color, move)
+                if threats >= 2:
+                    role = "force_win"
+                elif threats == 1:
+                    role = "threat"
         item = TacticalMove(move, role)
         by_role[role].append(item)
 
