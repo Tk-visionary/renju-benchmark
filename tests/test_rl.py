@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from renju_benchmark.rules import BLACK, Board, parse_coord
+from renju_benchmark.rules import BLACK, WHITE, Board, parse_coord
 from renju_benchmark.rl.board_encoding import (
     BOARD_SIZE,
     CHANNELS,
@@ -14,7 +14,7 @@ from renju_benchmark.rl.board_encoding import (
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
 from renju_benchmark.rl.rapfi_env import score_for_model, summarize_game_rows, winner_after_move_result
-from renju_benchmark.rl.search import tactical_candidates
+from renju_benchmark.rl.search import tactical_candidates, tactical_candidates_with_roles
 
 
 def board_from_points(points: list[tuple[str, str]]) -> Board:
@@ -60,6 +60,32 @@ def test_tactical_candidates_prioritize_immediate_win() -> None:
 
     assert parse_coord("E8") in candidates
     assert parse_coord("J8") in candidates
+
+
+def test_tactical_candidates_with_roles_marks_single_block_safe() -> None:
+    board = board_from_points([
+        ("E8", BLACK),
+        ("F8", WHITE),
+        ("G8", WHITE),
+        ("H8", WHITE),
+        ("I8", WHITE),
+    ])
+    roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
+
+    assert roles[parse_coord("J8")] == "block"
+
+
+def test_tactical_candidates_with_roles_marks_unblockable_open_four_unsafe() -> None:
+    board = board_from_points([
+        ("F8", WHITE),
+        ("G8", WHITE),
+        ("H8", WHITE),
+        ("I8", WHITE),
+    ])
+    roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
+
+    assert roles[parse_coord("E8")] == "unsafe"
+    assert roles[parse_coord("J8")] == "unsafe"
 
 
 def test_policy_value_model_config_is_plain_dataclass() -> None:
