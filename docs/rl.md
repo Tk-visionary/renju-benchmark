@@ -21,10 +21,38 @@ weak Rapfi settings, then climb toward stronger Rapfi configurations.
 
 ## Data Collection
 
+Set up Rapfi locally first. This clones Rapfi under ignored `external/` and attempts an ARM64 NEON or x64 AVX2 build:
+
+```bash
+python scripts/setup_rapfi.py
+export RAPFI_PATH=/absolute/path/printed/by/setup
+export RAPFI_CWD=/absolute/runtime/dir/printed/by/setup
+```
+
+Rapfi is GPL-3.0; this repository does not vendor its source, binaries, networks, or generated build artifacts.
+The setup script clones and builds Rapfi under ignored `external/`, then copies the executable, `config.toml`, and
+network files into ignored `external/rapfi-runtime`.
+
 ```bash
 export RAPFI_PATH=/path/to/rapfi
 python scripts/rl_collect_rapfi.py --count 1000 --output data/generated/rl/rapfi_1k.jsonl
 ```
+
+For weak-Rapfi curriculum data, cap the engine budget:
+
+```bash
+python scripts/rl_collect_rapfi.py \
+  --count 1000 \
+  --output data/generated/rl/rapfi_1k.jsonl \
+  --rapfi-path external/rapfi-runtime/pbrain-rapfi \
+  --rapfi-cwd external/rapfi-runtime \
+  --timeout-turn-ms 100 \
+  --max-node 1000
+```
+
+Current integration note: the built Rapfi runtime has been verified to answer an empty-board `BEGIN`/best-move query.
+Intermediate-position annotation through Gomocup `BOARD`/`YXBOARD` still needs protocol tuning before large-scale
+teacher-data collection is considered reliable.
 
 Each row contains:
 
@@ -85,4 +113,3 @@ The first concrete target is not full-strength Rapfi. It is:
 - win rate above 55%
 
 After that, raise the opponent budget gradually.
-

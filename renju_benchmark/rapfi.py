@@ -20,6 +20,10 @@ class RapfiConfig:
     cwd: str | Path | None = None
     startup_timeout: float = 5.0
     move_timeout: float = 10.0
+    timeout_turn_ms: int | None = None
+    max_depth: int | None = None
+    max_node: int | None = None
+    rule: int | None = 4
 
     @classmethod
     def from_env(cls) -> "RapfiConfig":
@@ -30,6 +34,10 @@ class RapfiConfig:
             executable=executable,
             cwd=os.environ.get("RAPFI_CWD") or None,
             move_timeout=float(os.environ.get("RAPFI_MOVE_TIMEOUT", "10.0")),
+            timeout_turn_ms=_optional_int_env("RAPFI_TIMEOUT_TURN_MS"),
+            max_depth=_optional_int_env("RAPFI_MAX_DEPTH"),
+            max_node=_optional_int_env("RAPFI_MAX_NODE"),
+            rule=_optional_int_env("RAPFI_RULE", default=4),
         )
 
 
@@ -50,9 +58,11 @@ class RapfiEngine:
     def start(self) -> None:
         if self.process is not None:
             return
+        executable = Path(self.config.executable).resolve()
+        cwd = Path(self.config.cwd).resolve() if self.config.cwd is not None else None
         self.process = subprocess.Popen(
-            [str(self.config.executable)],
-            cwd=str(self.config.cwd) if self.config.cwd is not None else None,
+            [str(executable)],
+            cwd=str(cwd) if cwd is not None else None,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -60,9 +70,17 @@ class RapfiEngine:
             bufsize=1,
         )
         self._send(f"START {BOARD_SIZE}")
-        response = self._readline()
+        response = self._read_until(lambda line: line.upper() in {"OK", "OK."})
         if response.upper() not in {"OK", "OK."}:
             raise RapfiError(f"Rapfi START failed: {response}")
+        if self.config.rule is not None:
+            self._send(f"INFO rule {self.config.rule}")
+        if self.config.timeout_turn_ms is not None:
+            self._send(f"INFO timeout_turn {self.config.timeout_turn_ms}")
+        if self.config.max_depth is not None:
+            self._send(f"INFO max_depth {self.config.max_depth}")
+        if self.config.max_node is not None:
+            self._send(f"INFO max_node {self.config.max_node}")
 
     def close(self) -> None:
         if self.process is None:
@@ -80,14 +98,18 @@ class RapfiEngine:
             self.process = None
 
     def best_move(self, board: Board, color: str) -> tuple[int, int]:
+        stones = [(row, col, stone) for row, col, stone in _iter_stones(board)]
+        return self.best_move_from_history(stones, color)
+
+    def best_move_from_history(self, history: list[tuple[int, int, str]], color: str) -> tuple[int, int]:
         if self.process is None:
             self.start()
         self._send("BOARD")
-        for row, col, stone in _iter_stones(board):
-            player = 1 if stone == BLACK else 2
+        for row, col, stone in history:
+            player = 1 if stone == color else 2
             self._send(f"{col},{row},{player}")
         self._send("DONE")
-        response = self._readline()
+        response = self._read_until(_looks_like_engine_move)
         return _parse_engine_move(response)
 
     def _send(self, command: str) -> None:
@@ -105,6 +127,14 @@ class RapfiEngine:
         if line == "":
             raise RapfiError("Rapfi process ended unexpectedly")
         return line.strip()
+
+    def _read_until(self, predicate, timeout: float | None = None) -> str:
+        while True:
+            line = self._readline(timeout)
+            if predicate(line):
+                return line
+            if line.upper().startswith("ERROR"):
+                raise RapfiError(line)
 
     def _stdin(self) -> TextIO:
         if self.process is None or self.process.stdin is None:
@@ -139,6 +169,26 @@ def _parse_engine_move(response: str) -> tuple[int, int]:
     return row, col
 
 
+def _looks_like_engine_move(response: str) -> bool:
+    first = response.split()[0] if response.split() else ""
+    parts = first.split(",")
+    if len(parts) < 2:
+        return False
+    try:
+        int(parts[0])
+        int(parts[1])
+    except ValueError:
+        return False
+    return True
+
+
 def rapfi_move(board: Board, color: str, config: RapfiConfig | None = None) -> tuple[int, int]:
     with RapfiEngine(config or RapfiConfig.from_env()) as engine:
         return engine.best_move(board, color)
+
+
+def _optional_int_env(name: str, default: int | None = None) -> int | None:
+    value = os.environ.get(name)
+    if value is None or value == "":
+        return default
+    return int(value)

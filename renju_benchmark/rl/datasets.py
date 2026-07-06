@@ -20,17 +20,24 @@ class RapfiExample:
     source: str
 
 
-def random_reachable_position(rng: random.Random, plies: int, mode: RuleMode | str = RuleMode.FAST) -> tuple[Board, str]:
+def random_reachable_position(
+    rng: random.Random,
+    plies: int,
+    mode: RuleMode | str = RuleMode.FAST,
+) -> tuple[Board, str, list[tuple[int, int, str]]]:
     game = RenjuGame.new(mode=mode)
+    history: list[tuple[int, int, str]] = []
     for ply in range(plies):
+        color = game.turn
         if game.turn == BLACK:
             row, col = heuristic_move(game.board, game.turn) if ply % 3 == 0 else random_move(game.board, game.turn)
         else:
             row, col = random_move(game.board, game.turn)
         result = game.play(row, col)
+        history.append((row, col, color))
         if result != MoveResult.OK:
             break
-    return game.board, game.turn
+    return game.board, game.turn, history
 
 
 def collect_rapfi_examples(
@@ -45,8 +52,8 @@ def collect_rapfi_examples(
     with RapfiEngine(config or RapfiConfig.from_env()) as rapfi:
         rows = []
         for _ in range(count):
-            board, turn = random_reachable_position(rng, rng.randint(min_plies, max_plies))
-            move = rapfi.best_move(board, turn)
+            board, turn, history = random_reachable_position(rng, rng.randint(min_plies, max_plies))
+            move = rapfi.best_move_from_history(history, turn)
             coord = format_coord(*move)
             example = RapfiExample(
                 board=board.to_text(),

@@ -20,11 +20,21 @@ def main() -> None:
     parser.add_argument("--rapfi-path", type=Path)
     parser.add_argument("--rapfi-cwd", type=Path)
     parser.add_argument("--move-timeout", type=float, default=10.0)
+    parser.add_argument("--timeout-turn-ms", type=int, default=100)
+    parser.add_argument("--max-depth", type=int)
+    parser.add_argument("--max-node", type=int, default=1000)
     args = parser.parse_args()
 
     config = None
     if args.rapfi_path is not None:
-        config = RapfiConfig(executable=args.rapfi_path, cwd=args.rapfi_cwd, move_timeout=args.move_timeout)
+        config = RapfiConfig(
+            executable=args.rapfi_path,
+            cwd=args.rapfi_cwd,
+            move_timeout=args.move_timeout,
+            timeout_turn_ms=args.timeout_turn_ms,
+            max_depth=args.max_depth,
+            max_node=args.max_node,
+        )
 
     rows = []
     for game_index in range(args.games):
