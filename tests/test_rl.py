@@ -14,7 +14,7 @@ from renju_benchmark.rl.board_encoding import (
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
 from renju_benchmark.rl.rapfi_env import score_for_model, summarize_game_rows, winner_after_move_result
-from renju_benchmark.rl.search import tactical_candidates, tactical_candidates_with_roles
+from renju_benchmark.rl.search import tactical_candidates, tactical_candidates_with_roles, winning_threat_count
 
 
 def board_from_points(points: list[tuple[str, str]]) -> Board:
@@ -93,11 +93,27 @@ def test_tactical_candidates_with_roles_marks_winning_threat() -> None:
         ("F8", BLACK),
         ("G8", BLACK),
         ("H8", BLACK),
+        ("D8", WHITE),
+        ("J8", WHITE),
     ])
     roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
 
     assert roles[parse_coord("E8")] == "threat"
-    assert roles[parse_coord("I8")] == "threat"
+
+
+def test_tactical_candidates_with_roles_marks_double_threat_as_force_win() -> None:
+    board = board_from_points([
+        ("F8", BLACK),
+        ("G8", BLACK),
+        ("H6", BLACK),
+        ("H7", BLACK),
+        ("H9", BLACK),
+    ])
+    move = parse_coord("H8")
+    roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
+
+    assert winning_threat_count(board, BLACK, move) >= 2
+    assert roles[move] == "force_win"
 
 
 def test_policy_value_model_config_is_plain_dataclass() -> None:
@@ -159,7 +175,7 @@ def test_policy_value_agent_tactical_move_prioritizes_win(tmp_path) -> None:
     assert agent.tactical_move(board, "black") in {parse_coord("E8"), parse_coord("J8")}
 
 
-def test_policy_value_agent_tactical_move_prioritizes_threat_group(tmp_path) -> None:
+def test_policy_value_agent_tactical_move_prioritizes_force_win_group(tmp_path) -> None:
     torch = pytest.importorskip("torch")
     from renju_benchmark.rl.inference import PolicyValueAgent
 
@@ -176,7 +192,7 @@ def test_policy_value_agent_tactical_move_prioritizes_threat_group(tmp_path) -> 
     board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK)])
     agent = PolicyValueAgent(checkpoint)
     roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
-    assert roles[agent.tactical_move(board, "black")] == "threat"
+    assert roles[agent.tactical_move(board, "black")] == "force_win"
 
 
 def test_winner_after_illegal_move_is_opponent() -> None:

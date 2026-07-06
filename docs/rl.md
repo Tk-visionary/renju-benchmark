@@ -148,9 +148,9 @@ stale protocol output in early experiments. `--reuse-rapfi-process` is available
 is stable for the chosen setting.
 
 `--tactical` makes the policy/value model choose among tactical candidates: immediate wins, immediate blocks, and
-nearby legal points. It also prioritizes moves that create a next-turn winning threat, and filters out moves that allow
-an immediate winning reply when there is a safer candidate. This is the default direction for beating weak Rapfi; raw
-policy-only moves are mainly useful for debugging imitation quality.
+nearby legal points. It prioritizes double threats that create multiple next-turn wins, then single winning threats, and
+filters out moves that allow an immediate winning reply when there is a safer candidate. This is the default direction
+for beating weak Rapfi; raw policy-only moves are mainly useful for debugging imitation quality.
 
 ## Experiment Runner
 

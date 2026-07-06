@@ -29,9 +29,9 @@ def opponent_winning_replies(board: Board, color: str, move: tuple[int, int]) ->
     return winning_moves(next_board, opponent(color), forbidden_depth=0)
 
 
-def creates_winning_threat(board: Board, color: str, move: tuple[int, int]) -> bool:
+def winning_threat_count(board: Board, color: str, move: tuple[int, int]) -> int:
     next_board = board.place(*move, color)
-    return bool(winning_moves(next_board, color, forbidden_depth=2))
+    return len(winning_moves(next_board, color, forbidden_depth=2))
 
 
 def tactical_candidates(board: Board, color: str, radius: int = 2, limit: int = 32) -> list[tuple[int, int]]:
@@ -87,6 +87,7 @@ def tactical_candidates_with_roles(
 
     by_role: dict[str, list[TacticalMove]] = {
         "block": [],
+        "force_win": [],
         "threat": [],
         "safe": [],
         "unsafe": [],
@@ -95,10 +96,14 @@ def tactical_candidates_with_roles(
         role = "block" if move in blocks else "safe"
         if opponent_winning_replies(board, color, move):
             role = "unsafe"
-        elif role == "safe" and creates_winning_threat(board, color, move):
-            role = "threat"
+        elif role == "safe":
+            threats = winning_threat_count(board, color, move)
+            if threats >= 2:
+                role = "force_win"
+            elif threats == 1:
+                role = "threat"
         item = TacticalMove(move, role)
         by_role[role].append(item)
 
-    ordered = by_role["block"] + by_role["threat"] + by_role["safe"] + by_role["unsafe"]
+    ordered = by_role["block"] + by_role["force_win"] + by_role["threat"] + by_role["safe"] + by_role["unsafe"]
     return ordered[:limit]
