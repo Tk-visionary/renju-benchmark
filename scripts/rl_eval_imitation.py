@@ -27,7 +27,7 @@ def main() -> None:
     ranks = []
     for example in examples:
         board = Board.from_text(example["board"])
-        target = parse_coord(example["rapfi_best"])
+        target = parse_coord(best_move_label(example))
         rank = agent.score_move_rank(board, example["side"], target, top_k=args.top_k)
         if rank == 1:
             top1 += 1
@@ -43,6 +43,14 @@ def main() -> None:
         "mean_rank_in_top_k": sum(ranks) / len(ranks) if ranks else None,
     }
     print(json.dumps(output, indent=2, sort_keys=True))
+
+
+def best_move_label(example: dict) -> str:
+    for key in ("best_move", "rapfi_best", "tactical_best"):
+        value = example.get(key)
+        if isinstance(value, str):
+            return value
+    raise KeyError("example has no best_move, rapfi_best, or tactical_best label")
 
 
 if __name__ == "__main__":

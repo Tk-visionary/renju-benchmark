@@ -18,6 +18,7 @@ class RapfiExample:
     rapfi_best: str
     policy_index: int
     source: str
+    best_move: str | None = None
 
 
 def random_reachable_position(
@@ -77,6 +78,7 @@ def collect_rapfi_examples(
                 rapfi_best=coord,
                 policy_index=coord_to_index(coord),
                 source="rapfi_best_move",
+                best_move=coord,
             )
             rows.append(json.dumps(asdict(example)))
     finally:

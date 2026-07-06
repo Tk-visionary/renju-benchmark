@@ -240,6 +240,20 @@ def test_tactical_eval_script_imports() -> None:
     assert callable(module.main)
 
 
+def test_tactical_collect_script_imports() -> None:
+    import scripts.rl_collect_tactical as module
+
+    assert callable(module.main)
+
+
+def test_imitation_eval_accepts_source_neutral_best_move() -> None:
+    from scripts.rl_eval_imitation import best_move_label
+
+    assert best_move_label({"best_move": "H8"}) == "H8"
+    assert best_move_label({"rapfi_best": "I8"}) == "I8"
+    assert best_move_label({"tactical_best": "J8"}) == "J8"
+
+
 def test_winner_after_illegal_move_is_opponent() -> None:
     from renju_benchmark.rules import MoveResult, WHITE
 

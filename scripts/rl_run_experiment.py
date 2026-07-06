@@ -19,10 +19,16 @@ def capture_json(command: list[str]) -> dict:
     return json.loads(output)
 
 
+def read_jsonl_block(path: Path) -> str:
+    text = path.read_text()
+    return text if text.endswith("\n") else text + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run one Rapfi-imitation experiment end to end.")
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--count", type=int, default=64)
+    parser.add_argument("--tactical-count", type=int, default=0)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--min-plies", type=int, default=0)
     parser.add_argument("--max-plies", type=int, default=8)
@@ -48,6 +54,8 @@ def main() -> None:
     run_dir = args.run_dir
     run_dir.mkdir(parents=True, exist_ok=True)
     dataset = run_dir / "rapfi_examples.jsonl"
+    tactical_dataset = run_dir / "tactical_examples.jsonl"
+    train_dataset = run_dir / "train_examples.jsonl"
     checkpoint = run_dir / "policy_value.pt"
     metrics_path = run_dir / "metrics.json"
     config_path = run_dir / "config.json"
@@ -59,6 +67,8 @@ def main() -> None:
     config.update({
         "run_dir": str(run_dir),
         "dataset": str(dataset),
+        "tactical_dataset": str(tactical_dataset),
+        "train_dataset": str(train_dataset),
         "checkpoint": str(checkpoint),
     })
     config_path.write_text(json.dumps(config, indent=2, sort_keys=True) + "\n")
@@ -82,10 +92,25 @@ def main() -> None:
         "--max-plies", str(args.max_plies),
         *common_rapfi,
     ])
+    train_inputs = []
+    if args.tactical_count > 0:
+        run([
+            sys.executable,
+            "scripts/rl_collect_tactical.py",
+            "--count", str(args.tactical_count),
+            "--output", str(tactical_dataset),
+            "--seed", str(args.seed),
+            "--min-plies", str(args.min_plies),
+            "--max-plies", str(args.max_plies),
+            "--candidate-limit", str(args.candidate_limit),
+        ])
+        train_inputs.append(read_jsonl_block(tactical_dataset))
+    train_inputs.append(read_jsonl_block(dataset))
+    train_dataset.write_text("".join(train_inputs))
     run([
         sys.executable,
         "scripts/rl_train_imitation.py",
-        "--input", str(dataset),
+        "--input", str(train_dataset),
         "--output", str(checkpoint),
         "--epochs", str(args.epochs),
         "--batch-size", str(args.batch_size),
@@ -96,7 +121,7 @@ def main() -> None:
         sys.executable,
         "scripts/rl_eval_imitation.py",
         "--checkpoint", str(checkpoint),
-        "--input", str(dataset),
+        "--input", str(train_dataset),
         "--top-k", str(args.top_k),
     ])
     tactical_match = capture_json([

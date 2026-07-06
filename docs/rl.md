@@ -70,6 +70,20 @@ Current integration note: the built Rapfi runtime has been verified for empty-bo
 best-move annotation. Rapfi may emit the best move as a PV in `MESSAGE Depth ... | H5 ...` rather than a raw `x,y`
 line, and the Python wrapper handles both formats.
 
+You can also collect fast tactical-floor labels without starting Rapfi:
+
+```bash
+python scripts/rl_collect_tactical.py \
+  --count 1000 \
+  --output data/generated/rl/tactical_1k.jsonl \
+  --seed 13 \
+  --min-plies 0 \
+  --max-plies 12
+```
+
+These rows use the same `policy_index` training schema and can be mixed with Rapfi labels. They are useful for
+pretraining immediate wins, blocks, double threats, and safety before slower Rapfi imitation.
+
 Each row contains:
 
 ```json
@@ -172,6 +186,7 @@ Use `scripts/rl_run_experiment.py` to run the current MVP loop and keep artifact
 python scripts/rl_run_experiment.py \
   --run-dir data/generated/rl/runs/smoke-001 \
   --count 16 \
+  --tactical-count 64 \
   --seed 13 \
   --min-plies 0 \
   --max-plies 8 \
