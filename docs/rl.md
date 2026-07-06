@@ -155,6 +155,45 @@ python scripts/rl_train_imitation.py \
 The first comparison target is HRM versus the default ResNet on tactical labels, then Rapfi imitation labels. HRM should
 be treated as a policy/value and tactical-feature model; it still needs tactical filtering or search for play.
 
+## Rapfi-Free HRM Self-Play
+
+You can start from a very weak randomly initialized HRM and grow it only from masked-legal self-play. Move selection
+always applies the strict legal policy mask before sampling, so occupied, off-board, and black-forbidden moves are not
+chosen by the player even when the network weights are random:
+
+```bash
+python scripts/rl_init_random_hrm.py \
+  --output data/generated/rl/selfplay/hrm_random.pt \
+  --seed 123 \
+  --channels 16 \
+  --hrm-cycles 1 \
+  --hrm-low-steps 1
+
+python scripts/rl_collect_self_play.py \
+  --checkpoint data/generated/rl/selfplay/hrm_random.pt \
+  --output data/generated/rl/selfplay/iter0.jsonl \
+  --games 16 \
+  --seed 123 \
+  --channels 16 \
+  --hrm-cycles 1 \
+  --hrm-low-steps 1 \
+  --temperature 1.5 \
+  --epsilon 0.25
+
+python scripts/rl_train_self_play.py \
+  --init-checkpoint data/generated/rl/selfplay/hrm_random.pt \
+  --input data/generated/rl/selfplay/iter0.jsonl \
+  --output data/generated/rl/selfplay/hrm_iter1.pt \
+  --epochs 3 \
+  --channels 16 \
+  --hrm-cycles 1 \
+  --hrm-low-steps 1
+```
+
+This is intentionally weak at first. The goal is to establish a closed loop: random HRM policy, legal self-play rows
+with final outcome values, HRM policy/value update, then next self-play generation. Tactical labels or symbolic rules can
+be mixed in later, but Rapfi is not required for the loop.
+
 ## Symbolic Rule Learning
 
 The non-neural route is to learn weights over interpretable tactical rules. This keeps the engine debuggable while still
