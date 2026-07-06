@@ -155,6 +155,15 @@ for beating weak Rapfi; raw policy-only moves are mainly useful for debugging im
 If `--tactical` is used without `--checkpoint`, the evaluator runs the same role-prioritized tactical search as a
 deterministic baseline. Use this to compare the learned policy against the hand-written tactical floor.
 
+Compare a checkpoint against that tactical floor without starting Rapfi:
+
+```bash
+python scripts/rl_evaluate_vs_tactical.py \
+  --checkpoint data/generated/rl/policy_value.pt \
+  --games 20 \
+  --max-plies 120
+```
+
 ## Experiment Runner
 
 Use `scripts/rl_run_experiment.py` to run the current MVP loop and keep artifacts together:
@@ -178,8 +187,8 @@ The run directory contains:
 - `policy_value.pt`
 - `metrics.json`
 
-`metrics.json` records imitation accuracy, WDL score, illegal rate, side scores, and per-game move logs. This is the
-main artifact for tracking progress toward the first target: score above 0.55 against weak Rapfi.
+`metrics.json` records imitation accuracy, tactical-baseline WDL, Rapfi WDL, illegal rate, side scores, and per-game
+move logs. This is the main artifact for tracking progress toward the first target: score above 0.55 against weak Rapfi.
 
 The evaluator prints a JSON report with aggregate WDL metrics and per-game logs:
 

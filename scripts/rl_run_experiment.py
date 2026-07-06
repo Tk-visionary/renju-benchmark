@@ -32,7 +32,10 @@ def main() -> None:
     parser.add_argument("--resblocks", type=int, default=2)
     parser.add_argument("--eval-games", type=int, default=2)
     parser.add_argument("--eval-max-plies", type=int, default=12)
+    parser.add_argument("--tactical-games", type=int, default=2)
+    parser.add_argument("--tactical-max-plies", type=int, default=60)
     parser.add_argument("--top-k", type=int, default=5)
+    parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--rapfi-path", type=Path, default=Path("external/rapfi-runtime/pbrain-rapfi"))
     parser.add_argument("--rapfi-cwd", type=Path, default=Path("external/rapfi-runtime"))
     parser.add_argument("--move-timeout", type=float, default=10.0)
@@ -96,6 +99,14 @@ def main() -> None:
         "--input", str(dataset),
         "--top-k", str(args.top_k),
     ])
+    tactical_match = capture_json([
+        sys.executable,
+        "scripts/rl_evaluate_vs_tactical.py",
+        "--checkpoint", str(checkpoint),
+        "--games", str(args.tactical_games),
+        "--max-plies", str(args.tactical_max_plies),
+        "--candidate-limit", str(args.candidate_limit),
+    ])
     eval_command = [
         sys.executable,
         "scripts/rl_evaluate_vs_rapfi.py",
@@ -111,6 +122,8 @@ def main() -> None:
     metrics = {
         "config": config,
         "imitation": imitation,
+        "tactical_match": tactical_match["summary"],
+        "tactical_games": tactical_match["games"],
         "match": match["summary"],
         "games": match["games"],
     }

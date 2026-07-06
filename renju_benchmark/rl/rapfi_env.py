@@ -78,6 +78,26 @@ def play_vs_rapfi(
             rapfi_context.close()
 
 
+def play_match(
+    black_move_fn,
+    white_move_fn,
+    max_plies: int = 120,
+    mode: RuleMode | str = RuleMode.STRICT,
+) -> GameResult:
+    game = RenjuGame.new(mode=mode)
+    moves: list[str] = []
+    for _ in range(max_plies):
+        mover = game.turn
+        move_fn = black_move_fn if mover == BLACK else white_move_fn
+        row, col = move_fn(game.board, mover)
+        coord = format_coord(row, col) if game.board.in_bounds(row, col) else f"{row},{col}"
+        result = game.play(row, col)
+        moves.append(coord)
+        if result != MoveResult.OK:
+            return GameResult(result=result.value, moves=moves, winner=winner_after_move_result(result, mover))
+    return GameResult(result="max_plies", moves=moves, winner=None)
+
+
 def play_heuristic_vs_rapfi(
     model_color: str = BLACK,
     config: RapfiConfig | None = None,

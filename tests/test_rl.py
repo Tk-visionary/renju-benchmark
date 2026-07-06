@@ -13,7 +13,7 @@ from renju_benchmark.rl.board_encoding import (
 )
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
-from renju_benchmark.rl.rapfi_env import score_for_model, summarize_game_rows, winner_after_move_result
+from renju_benchmark.rl.rapfi_env import play_match, score_for_model, summarize_game_rows, winner_after_move_result
 from renju_benchmark.rl.search import (
     tactical_candidates,
     tactical_candidates_with_roles,
@@ -217,6 +217,27 @@ def test_rapfi_eval_agent_name_for_tactical_baseline() -> None:
 
     assert agent_name(has_checkpoint=False, tactical=True) == "tactical_heuristic"
     assert agent_name(has_checkpoint=False, tactical=False) == "heuristic"
+
+
+def test_play_match_reports_winner() -> None:
+    black_moves = [parse_coord("F8"), parse_coord("G8"), parse_coord("H8"), parse_coord("I8"), parse_coord("J8")]
+    white_moves = [parse_coord("A1"), parse_coord("A2"), parse_coord("A3"), parse_coord("A4")]
+
+    def scripted_black(_board, _side):
+        return black_moves.pop(0)
+
+    def scripted_white(_board, _side):
+        return white_moves.pop(0)
+
+    result = play_match(scripted_black, scripted_white, max_plies=9)
+    assert result.result == "black_win"
+    assert result.winner == BLACK
+
+
+def test_tactical_eval_script_imports() -> None:
+    import scripts.rl_evaluate_vs_tactical as module
+
+    assert callable(module.main)
 
 
 def test_winner_after_illegal_move_is_opponent() -> None:
