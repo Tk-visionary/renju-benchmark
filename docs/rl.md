@@ -151,6 +151,32 @@ is stable for the chosen setting.
 nearby legal points. This is the default direction for beating weak Rapfi; raw policy-only moves are mainly useful for
 debugging imitation quality.
 
+## Experiment Runner
+
+Use `scripts/rl_run_experiment.py` to run the current MVP loop and keep artifacts together:
+
+```bash
+python scripts/rl_run_experiment.py \
+  --run-dir data/generated/rl/runs/smoke-001 \
+  --count 16 \
+  --seed 13 \
+  --min-plies 0 \
+  --max-plies 8 \
+  --epochs 3 \
+  --eval-games 2 \
+  --eval-max-plies 12
+```
+
+The run directory contains:
+
+- `config.json`
+- `rapfi_examples.jsonl`
+- `policy_value.pt`
+- `metrics.json`
+
+`metrics.json` records imitation accuracy, WDL score, illegal rate, side scores, and per-game move logs. This is the
+main artifact for tracking progress toward the first target: score above 0.55 against weak Rapfi.
+
 The evaluator prints a JSON report with aggregate WDL metrics and per-game logs:
 
 ```json

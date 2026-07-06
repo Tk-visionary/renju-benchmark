@@ -94,6 +94,7 @@ class RapfiEngine:
             self.process.wait(timeout=2)
         except Exception:
             self.process.kill()
+            self.process.wait(timeout=2)
         finally:
             self.process = None
 
