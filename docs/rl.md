@@ -205,6 +205,13 @@ The run directory contains:
 `metrics.json` records imitation accuracy, tactical-baseline WDL, Rapfi WDL, illegal rate, side scores, and per-game
 move logs. This is the main artifact for tracking progress toward the first target: score above 0.55 against weak Rapfi.
 
+Compare multiple runs:
+
+```bash
+python scripts/rl_summarize_runs.py data/generated/rl/runs
+python scripts/rl_summarize_runs.py data/generated/rl/runs --min-rapfi-score 0.55
+```
+
 The evaluator prints a JSON report with aggregate WDL metrics and per-game logs:
 
 ```json

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from renju_benchmark.rules import BLACK, WHITE, Board, parse_coord
@@ -252,6 +254,26 @@ def test_imitation_eval_accepts_source_neutral_best_move() -> None:
     assert best_move_label({"best_move": "H8"}) == "H8"
     assert best_move_label({"rapfi_best": "I8"}) == "I8"
     assert best_move_label({"tactical_best": "J8"}) == "J8"
+
+
+def test_rl_summarize_runs_reads_metrics(tmp_path) -> None:
+    from scripts.rl_summarize_runs import summarize_metrics
+
+    metrics = tmp_path / "metrics.json"
+    metrics.write_text(
+        json.dumps({
+            "config": {"run_dir": "run-a", "count": 4, "tactical_count": 8, "epochs": 1},
+            "imitation": {"top1_accuracy": 0.25, "top5_accuracy": 0.75},
+            "tactical_match": {"score": 0.5, "win_rate": 0.0, "illegal_rate": 0.0, "games": 2},
+            "match": {"score": 0.25, "win_rate": 0.0, "illegal_rate": 0.0, "games": 2},
+        })
+    )
+
+    row = summarize_metrics(metrics)
+    assert row["run"] == "run-a"
+    assert row["tactical_count"] == 8
+    assert row["top5_accuracy"] == 0.75
+    assert row["rapfi_score"] == 0.25
 
 
 def test_winner_after_illegal_move_is_opponent() -> None:
