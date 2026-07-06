@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from renju_benchmark.agents import heuristic_move
 from renju_benchmark.rapfi import RapfiConfig
 from renju_benchmark.rules import BLACK, WHITE
+from renju_benchmark.rl.inference import PolicyValueAgent
 from renju_benchmark.rl.rapfi_env import play_vs_rapfi
 
 
@@ -23,6 +24,9 @@ def main() -> None:
     parser.add_argument("--timeout-turn-ms", type=int, default=100)
     parser.add_argument("--max-depth", type=int)
     parser.add_argument("--max-node", type=int, default=1000)
+    parser.add_argument("--checkpoint", type=Path)
+    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--reuse-rapfi-process", action="store_true")
     args = parser.parse_args()
 
     config = None
@@ -35,18 +39,22 @@ def main() -> None:
             max_depth=args.max_depth,
             max_node=args.max_node,
         )
+    agent = PolicyValueAgent(args.checkpoint, device=args.device) if args.checkpoint else None
 
     rows = []
     for game_index in range(args.games):
         color = BLACK if game_index % 2 == 0 else WHITE
+        move_fn = agent.move if agent is not None else heuristic_move
         result = play_vs_rapfi(
-            lambda board, side: heuristic_move(board, side),
+            move_fn,
             model_color=color,
             config=config,
             max_plies=args.max_plies,
+            fresh_rapfi_per_move=not args.reuse_rapfi_process,
         )
         rows.append({
             "game": game_index,
+            "agent": "policy_value" if agent is not None else "heuristic",
             "model_color": "black" if color == BLACK else "white",
             "result": result.result,
             "winner": result.winner,

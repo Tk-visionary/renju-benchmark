@@ -13,6 +13,7 @@ from renju_benchmark.rl.board_encoding import (
 )
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
+from renju_benchmark.rl.rapfi_env import winner_after_move_result
 from renju_benchmark.rl.search import tactical_candidates
 
 
@@ -98,3 +99,10 @@ def test_policy_value_agent_checkpoint_roundtrip(tmp_path) -> None:
     agent = PolicyValueAgent(checkpoint)
     move = agent.move(Board.empty(), "black")
     assert Board.empty().in_bounds(*move)
+    assert agent.rank_moves(Board.empty(), "black", top_k=3)
+
+
+def test_winner_after_illegal_move_is_opponent() -> None:
+    from renju_benchmark.rules import MoveResult, WHITE
+
+    assert winner_after_move_result(MoveResult.ILLEGAL_OCCUPIED, BLACK) == WHITE

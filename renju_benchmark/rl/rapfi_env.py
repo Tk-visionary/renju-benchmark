@@ -28,27 +28,50 @@ def result_winner(result: MoveResult) -> str | None:
     return None
 
 
+def winner_after_move_result(result: MoveResult, mover: str) -> str | None:
+    if result in {MoveResult.ILLEGAL_OFF_BOARD, MoveResult.ILLEGAL_OCCUPIED}:
+        return opponent(mover)
+    return result_winner(result)
+
+
 def play_vs_rapfi(
     model_move_fn,
     model_color: str = BLACK,
     config: RapfiConfig | None = None,
     max_plies: int = 120,
     mode: RuleMode | str = RuleMode.STRICT,
+    fresh_rapfi_per_move: bool = True,
 ) -> GameResult:
     game = RenjuGame.new(mode=mode)
     moves: list[str] = []
-    with RapfiEngine(config or RapfiConfig.from_env()) as rapfi:
+    history: list[tuple[int, int, str]] = []
+    rapfi_config = config or RapfiConfig.from_env()
+    rapfi_context = None if fresh_rapfi_per_move else RapfiEngine(rapfi_config)
+    try:
+        if rapfi_context is not None:
+            rapfi_context.start()
         for _ in range(max_plies):
+            mover = game.turn
             if game.turn == model_color:
                 row, col = model_move_fn(game.board, game.turn)
+            elif fresh_rapfi_per_move:
+                with RapfiEngine(rapfi_config) as rapfi:
+                    row, col = rapfi.best_move_from_history(history, game.turn)
             else:
-                row, col = rapfi.best_move(game.board, game.turn)
+                assert rapfi_context is not None
+                rapfi = rapfi_context
+                row, col = rapfi.best_move_from_history(history, game.turn)
             coord = format_coord(row, col) if game.board.in_bounds(row, col) else f"{row},{col}"
             result = game.play(row, col)
             moves.append(coord)
+            if game.board.in_bounds(row, col):
+                history.append((row, col, mover))
             if result != MoveResult.OK:
-                return GameResult(result=result.value, moves=moves, winner=result_winner(result))
-    return GameResult(result="max_plies", moves=moves, winner=None)
+                return GameResult(result=result.value, moves=moves, winner=winner_after_move_result(result, mover))
+        return GameResult(result="max_plies", moves=moves, winner=None)
+    finally:
+        if rapfi_context is not None:
+            rapfi_context.close()
 
 
 def play_heuristic_vs_rapfi(

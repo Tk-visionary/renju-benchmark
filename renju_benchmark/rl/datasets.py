@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from renju_benchmark.agents import heuristic_move, random_move
-from renju_benchmark.rapfi import RapfiConfig, RapfiEngine
+from renju_benchmark.rapfi import RapfiConfig, RapfiEngine, RapfiError
 from renju_benchmark.rules import BLACK, Board, MoveResult, RenjuGame, RuleMode, format_coord
 from renju_benchmark.rl.board_encoding import coord_to_index, encode_position
 
@@ -47,13 +47,29 @@ def collect_rapfi_examples(
     seed: int = 0,
     min_plies: int = 4,
     max_plies: int = 30,
+    fresh_rapfi_per_position: bool = True,
 ) -> None:
     rng = random.Random(seed)
-    with RapfiEngine(config or RapfiConfig.from_env()) as rapfi:
-        rows = []
-        for _ in range(count):
+    rapfi_config = config or RapfiConfig.from_env()
+    rows = []
+    attempts = 0
+    max_attempts = max(count * 10, count)
+    rapfi_context = None if fresh_rapfi_per_position else RapfiEngine(rapfi_config)
+    try:
+        if rapfi_context is not None:
+            rapfi_context.start()
+        while len(rows) < count and attempts < max_attempts:
+            attempts += 1
             board, turn, history = random_reachable_position(rng, rng.randint(min_plies, max_plies))
-            move = rapfi.best_move_from_history(history, turn)
+            try:
+                if fresh_rapfi_per_position:
+                    with RapfiEngine(rapfi_config) as rapfi:
+                        move = rapfi.best_move_from_history(history, turn)
+                else:
+                    assert rapfi_context is not None
+                    move = rapfi_context.best_move_from_history(history, turn)
+            except RapfiError:
+                continue
             coord = format_coord(*move)
             example = RapfiExample(
                 board=board.to_text(),
@@ -63,6 +79,11 @@ def collect_rapfi_examples(
                 source="rapfi_best_move",
             )
             rows.append(json.dumps(asdict(example)))
+    finally:
+        if rapfi_context is not None:
+            rapfi_context.close()
+    if len(rows) < count:
+        raise RapfiError(f"collected {len(rows)} examples after {attempts} attempts; requested {count}")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(rows) + "\n")
 

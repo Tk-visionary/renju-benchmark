@@ -21,6 +21,9 @@ def main() -> None:
     parser.add_argument("--timeout-turn-ms", type=int, default=100)
     parser.add_argument("--max-depth", type=int)
     parser.add_argument("--max-node", type=int, default=1000)
+    parser.add_argument("--min-plies", type=int, default=4)
+    parser.add_argument("--max-plies", type=int, default=30)
+    parser.add_argument("--reuse-rapfi-process", action="store_true")
     args = parser.parse_args()
 
     config = None
@@ -33,7 +36,15 @@ def main() -> None:
             max_depth=args.max_depth,
             max_node=args.max_node,
         )
-    collect_rapfi_examples(count=args.count, output=args.output, config=config, seed=args.seed)
+    collect_rapfi_examples(
+        count=args.count,
+        output=args.output,
+        config=config,
+        seed=args.seed,
+        min_plies=args.min_plies,
+        max_plies=args.max_plies,
+        fresh_rapfi_per_position=not args.reuse_rapfi_process,
+    )
     print(f"wrote {args.count} Rapfi examples to {args.output}")
 
 

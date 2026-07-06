@@ -104,13 +104,26 @@ class RapfiEngine:
     def best_move_from_history(self, history: list[tuple[int, int, str]], color: str) -> tuple[int, int]:
         if self.process is None:
             self.start()
+        occupied = {(row, col) for row, col, _stone in history}
+        self._drain_pending_output()
         self._send("BOARD")
         for row, col, stone in history:
             player = 1 if stone == color else 2
             self._send(f"{col},{row},{player}")
         self._send("DONE")
-        response = self._read_until(_looks_like_engine_move)
-        return _parse_engine_move(response)
+        responses = self._read_move_responses()
+        last_error: RapfiError | None = None
+        for response in responses:
+            try:
+                move = _parse_engine_move(response)
+            except RapfiError as exc:
+                last_error = exc
+                continue
+            if move not in occupied:
+                return move
+        if last_error is not None:
+            raise last_error
+        raise RapfiError(f"Rapfi returned no legal move candidates: {responses!r}")
 
     def _send(self, command: str) -> None:
         stdin = self._stdin()
@@ -136,6 +149,22 @@ class RapfiEngine:
             if line.upper().startswith("ERROR"):
                 raise RapfiError(line)
 
+    def _read_move_responses(self) -> list[str]:
+        candidates: list[str] = []
+        while True:
+            try:
+                line = self._readline()
+            except RapfiError:
+                if candidates:
+                    return candidates
+                raise
+            if line.upper().startswith("ERROR"):
+                raise RapfiError(line)
+            if _looks_like_raw_engine_move(line):
+                return [line, *candidates]
+            if _looks_like_engine_move(line):
+                candidates.extend(_extract_move_tokens(line, raise_on_missing=False))
+
     def _stdin(self) -> TextIO:
         if self.process is None or self.process.stdin is None:
             raise RapfiError("Rapfi process is not running")
@@ -145,6 +174,15 @@ class RapfiEngine:
         if self.process is None or self.process.stdout is None:
             raise RapfiError("Rapfi process is not running")
         return self.process.stdout
+
+    def _drain_pending_output(self) -> None:
+        stdout = self._stdout()
+        while True:
+            ready, _, _ = select.select([stdout], [], [], 0)
+            if not ready:
+                return
+            if stdout.readline() == "":
+                return
 
 
 def _iter_stones(board: Board):
@@ -191,20 +229,38 @@ def _looks_like_engine_move(response: str) -> bool:
     return first[1:].isdigit()
 
 
+def _looks_like_raw_engine_move(response: str) -> bool:
+    first = response.split()[0] if response.split() else ""
+    parts = first.split(",")
+    if len(parts) < 2:
+        return False
+    try:
+        int(parts[0])
+        int(parts[1])
+    except ValueError:
+        return False
+    return True
+
+
 def _extract_move_token(response: str, raise_on_missing: bool = True) -> str:
+    tokens = _extract_move_tokens(response, raise_on_missing=raise_on_missing)
+    return tokens[0] if tokens else ""
+
+
+def _extract_move_tokens(response: str, raise_on_missing: bool = True) -> list[str]:
     tokens = response.split()
     if not tokens:
         if raise_on_missing:
             raise RapfiError(f"could not parse Rapfi move: {response!r}")
-        return ""
+        return []
     first = tokens[0]
     if "," in first:
-        return first
+        return [first]
     if first.upper() == "MESSAGE" and "|" in tokens:
         pipe = len(tokens) - 1 - tokens[::-1].index("|")
         if pipe + 1 < len(tokens):
-            return tokens[pipe + 1]
-    return first
+            return tokens[pipe + 1 :]
+    return [first]
 
 
 def rapfi_move(board: Board, color: str, config: RapfiConfig | None = None) -> tuple[int, int]:

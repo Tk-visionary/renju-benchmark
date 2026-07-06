@@ -50,6 +50,22 @@ python scripts/rl_collect_rapfi.py \
   --max-node 1000
 ```
 
+For a quick local smoke test, keep positions shallow:
+
+```bash
+python scripts/rl_collect_rapfi.py \
+  --count 16 \
+  --output data/generated/rl/rapfi_16_shallow.jsonl \
+  --seed 13 \
+  --min-plies 0 \
+  --max-plies 8 \
+  --rapfi-path external/rapfi-runtime/pbrain-rapfi \
+  --rapfi-cwd external/rapfi-runtime \
+  --timeout-turn-ms 50 \
+  --max-node 300 \
+  --max-depth 2
+```
+
 Current integration note: the built Rapfi runtime has been verified for empty-board and intermediate-position
 best-move annotation. Rapfi may emit the best move as a PV in `MESSAGE Depth ... | H5 ...` rather than a raw `x,y`
 line, and the Python wrapper handles both formats.
@@ -77,6 +93,15 @@ python scripts/rl_train_imitation.py \
   --epochs 3
 ```
 
+Measure imitation accuracy:
+
+```bash
+python scripts/rl_eval_imitation.py \
+  --checkpoint data/generated/rl/policy_value.pt \
+  --input data/generated/rl/rapfi_1k.jsonl \
+  --top-k 5
+```
+
 Smoke-test a trained checkpoint:
 
 ```bash
@@ -102,6 +127,23 @@ The first evaluation target is a baseline move function versus weak Rapfi settin
 ```bash
 python scripts/rl_evaluate_vs_rapfi.py --games 20 --max-plies 120
 ```
+
+Evaluate a trained checkpoint instead of the heuristic baseline:
+
+```bash
+python scripts/rl_evaluate_vs_rapfi.py \
+  --checkpoint data/generated/rl/policy_value.pt \
+  --games 20 \
+  --max-plies 120 \
+  --rapfi-path external/rapfi-runtime/pbrain-rapfi \
+  --rapfi-cwd external/rapfi-runtime \
+  --timeout-turn-ms 100 \
+  --max-node 1000
+```
+
+`rl_evaluate_vs_rapfi.py` uses a fresh Rapfi process for each Rapfi move by default. This is slower, but it avoids
+stale protocol output in early experiments. `--reuse-rapfi-process` is available for faster runs once protocol handling
+is stable for the chosen setting.
 
 For local Rapfi settings, configure the engine through its own config or use a low move timeout:
 
