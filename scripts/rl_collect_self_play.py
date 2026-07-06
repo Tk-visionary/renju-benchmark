@@ -21,7 +21,7 @@ def main() -> None:
     parser.add_argument("--hrm-low-steps", type=int, default=1)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--epsilon", type=float, default=0.1)
-    parser.add_argument("--max-plies", type=int, default=120)
+    parser.add_argument("--max-plies", type=int, default=225)
     parser.add_argument("--forbidden-depth", type=int, default=2)
     parser.add_argument("--local-legal-only", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--parallel-games", type=int, default=16)

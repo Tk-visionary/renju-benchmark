@@ -173,6 +173,7 @@ python scripts/rl_collect_self_play.py \
   --checkpoint data/generated/rl/selfplay/hrm_random.pt \
   --output data/generated/rl/selfplay/iter0.jsonl \
   --games 16 \
+  --parallel-games 16 \
   --seed 123 \
   --channels 16 \
   --hrm-cycles 1 \
@@ -194,7 +195,8 @@ This is intentionally weak at first. The goal is to establish a closed loop: ran
 with final outcome values, HRM policy/value update, then next self-play generation. Tactical labels or symbolic rules can
 be mixed in later, but Rapfi is not required for the loop.
 
-Initial local timing on an 8-channel, 1-cycle, 1-low-step HRM:
+Self-play uses a full 225-ply cap by default, so games can run until win, draw, or full board. The shorter 20-ply
+settings below are timing diagnostics for the 8-channel, 1-cycle, 1-low-step HRM:
 
 - 4 games x 20 plies: 80 positions, self-play collection about 1.3 seconds, 1 training epoch about 1.8 seconds.
 - 32 games x 20 plies: 640 positions, self-play collection about 4.1 seconds, 1 training epoch about 4.1 seconds.
@@ -203,9 +205,9 @@ Initial local timing on an 8-channel, 1-cycle, 1-low-step HRM:
 - 128 games x 20 plies with batched collection plus 1 training epoch is about 27.8 seconds total.
 
 The self-play collector keeps one model process in memory and reseeds the sampler per game. Early experiments should
-stay with small HRM settings and short `--max-plies`; once the loop shows learning signal, the next speed target is the
-strict legality path. The Python rule engine is good for correctness, but larger self-play runs should move hot legality
-checks behind a compiled extension or a bitboard-backed implementation while keeping the same Python API.
+stay with small HRM settings and high `--parallel-games`; once the loop shows learning signal, the next speed target is
+the strict legality path. The Python rule engine is good for correctness, but larger self-play runs should move hot
+legality checks behind a compiled extension or a bitboard-backed implementation while keeping the same Python API.
 
 ## Symbolic Rule Learning
 

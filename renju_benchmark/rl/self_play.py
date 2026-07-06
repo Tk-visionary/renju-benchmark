@@ -20,7 +20,7 @@ class SelfPlayConfig:
     hrm_low_steps: int = 1
     temperature: float = 1.0
     epsilon: float = 0.1
-    max_plies: int = 120
+    max_plies: int = BOARD_SIZE * BOARD_SIZE
     forbidden_depth: int = 2
     local_legal_only: bool = True
     parallel_games: int = 16
