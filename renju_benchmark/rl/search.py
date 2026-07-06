@@ -29,6 +29,11 @@ def opponent_winning_replies(board: Board, color: str, move: tuple[int, int]) ->
     return winning_moves(next_board, opponent(color), forbidden_depth=0)
 
 
+def creates_winning_threat(board: Board, color: str, move: tuple[int, int]) -> bool:
+    next_board = board.place(*move, color)
+    return bool(winning_moves(next_board, color, forbidden_depth=2))
+
+
 def tactical_candidates(board: Board, color: str, radius: int = 2, limit: int = 32) -> list[tuple[int, int]]:
     moves = legal_moves(board, color, local_only=True, forbidden_depth=2)
     other = opponent(color)
@@ -80,18 +85,20 @@ def tactical_candidates_with_roles(
         if would_make_exact_five(board, *move, other):
             blocks.add(move)
 
-    tactical: list[TacticalMove] = []
-    fallback: list[TacticalMove] = []
+    by_role: dict[str, list[TacticalMove]] = {
+        "block": [],
+        "threat": [],
+        "safe": [],
+        "unsafe": [],
+    }
     for move in moves:
         role = "block" if move in blocks else "safe"
         if opponent_winning_replies(board, color, move):
             role = "unsafe"
+        elif role == "safe" and creates_winning_threat(board, color, move):
+            role = "threat"
         item = TacticalMove(move, role)
-        if role == "unsafe":
-            fallback.append(item)
-        else:
-            tactical.append(item)
-        if len(tactical) >= limit:
-            return tactical
+        by_role[role].append(item)
 
-    return (tactical + fallback)[:limit]
+    ordered = by_role["block"] + by_role["threat"] + by_role["safe"] + by_role["unsafe"]
+    return ordered[:limit]

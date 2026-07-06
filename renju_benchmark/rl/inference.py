@@ -27,7 +27,12 @@ class PolicyValueAgent:
         return index_to_move(self.rank_moves(board, side, top_k=1)[0])
 
     def tactical_move(self, board: Board, side: str, limit: int = 32) -> tuple[int, int]:
-        candidates = [item.move for item in tactical_candidates_with_roles(board, _side_to_color(side), limit=limit)]
+        candidate_items = tactical_candidates_with_roles(board, _side_to_color(side), limit=limit)
+        for role in ("win", "block", "threat", "safe", "unsafe"):
+            candidates = [item.move for item in candidate_items if item.role == role]
+            if candidates:
+                return self.choose_ranked_candidate(board, side, candidates)
+        candidates = [item.move for item in candidate_items]
         if not candidates:
             candidates = tactical_candidates(board, _side_to_color(side), limit=limit)
             if not candidates:

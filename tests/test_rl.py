@@ -88,6 +88,18 @@ def test_tactical_candidates_with_roles_marks_unblockable_open_four_unsafe() -> 
     assert roles[parse_coord("J8")] == "unsafe"
 
 
+def test_tactical_candidates_with_roles_marks_winning_threat() -> None:
+    board = board_from_points([
+        ("F8", BLACK),
+        ("G8", BLACK),
+        ("H8", BLACK),
+    ])
+    roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
+
+    assert roles[parse_coord("E8")] == "threat"
+    assert roles[parse_coord("I8")] == "threat"
+
+
 def test_policy_value_model_config_is_plain_dataclass() -> None:
     config = ModelConfig(channels=32, residual_blocks=2)
     assert config.channels == 32
@@ -145,6 +157,26 @@ def test_policy_value_agent_tactical_move_prioritizes_win(tmp_path) -> None:
     board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK), ("I8", BLACK)])
     agent = PolicyValueAgent(checkpoint)
     assert agent.tactical_move(board, "black") in {parse_coord("E8"), parse_coord("J8")}
+
+
+def test_policy_value_agent_tactical_move_prioritizes_threat_group(tmp_path) -> None:
+    torch = pytest.importorskip("torch")
+    from renju_benchmark.rl.inference import PolicyValueAgent
+
+    checkpoint = tmp_path / "model.pt"
+    config = ModelConfig(channels=8, residual_blocks=1)
+    model = build_model(config)
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "config": {"channels": config.channels, "resblocks": config.residual_blocks},
+        },
+        checkpoint,
+    )
+    board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK)])
+    agent = PolicyValueAgent(checkpoint)
+    roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
+    assert roles[agent.tactical_move(board, "black")] == "threat"
 
 
 def test_winner_after_illegal_move_is_opponent() -> None:
