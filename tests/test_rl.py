@@ -102,6 +102,25 @@ def test_policy_value_agent_checkpoint_roundtrip(tmp_path) -> None:
     assert agent.rank_moves(Board.empty(), "black", top_k=3)
 
 
+def test_policy_value_agent_tactical_move_prioritizes_win(tmp_path) -> None:
+    torch = pytest.importorskip("torch")
+    from renju_benchmark.rl.inference import PolicyValueAgent
+
+    checkpoint = tmp_path / "model.pt"
+    config = ModelConfig(channels=8, residual_blocks=1)
+    model = build_model(config)
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "config": {"channels": config.channels, "resblocks": config.residual_blocks},
+        },
+        checkpoint,
+    )
+    board = board_from_points([("F8", BLACK), ("G8", BLACK), ("H8", BLACK), ("I8", BLACK)])
+    agent = PolicyValueAgent(checkpoint)
+    assert agent.tactical_move(board, "black") in {parse_coord("E8"), parse_coord("J8")}
+
+
 def test_winner_after_illegal_move_is_opponent() -> None:
     from renju_benchmark.rules import MoveResult, WHITE
 

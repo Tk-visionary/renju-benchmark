@@ -16,11 +16,18 @@ def main() -> None:
     parser.add_argument("board", type=Path)
     parser.add_argument("--side", choices=["black", "white"], default="black")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--tactical", action="store_true")
+    parser.add_argument("--candidate-limit", type=int, default=32)
     args = parser.parse_args()
 
     board = Board.from_text(args.board.read_text())
     agent = PolicyValueAgent(args.checkpoint, device=args.device)
-    print(format_coord(*agent.move(board, args.side)))
+    move = (
+        agent.tactical_move(board, args.side, limit=args.candidate_limit)
+        if args.tactical
+        else agent.move(board, args.side)
+    )
+    print(format_coord(*move))
 
 
 if __name__ == "__main__":

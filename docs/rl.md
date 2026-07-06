@@ -106,6 +106,7 @@ Smoke-test a trained checkpoint:
 
 ```bash
 python scripts/rl_policy_move.py data/generated/rl/policy_value.pt board.txt --side black
+python scripts/rl_policy_move.py data/generated/rl/policy_value.pt board.txt --side black --tactical
 ```
 
 The first model is intentionally small:
@@ -133,6 +134,7 @@ Evaluate a trained checkpoint instead of the heuristic baseline:
 ```bash
 python scripts/rl_evaluate_vs_rapfi.py \
   --checkpoint data/generated/rl/policy_value.pt \
+  --tactical \
   --games 20 \
   --max-plies 120 \
   --rapfi-path external/rapfi-runtime/pbrain-rapfi \
@@ -144,6 +146,10 @@ python scripts/rl_evaluate_vs_rapfi.py \
 `rl_evaluate_vs_rapfi.py` uses a fresh Rapfi process for each Rapfi move by default. This is slower, but it avoids
 stale protocol output in early experiments. `--reuse-rapfi-process` is available for faster runs once protocol handling
 is stable for the chosen setting.
+
+`--tactical` makes the policy/value model choose among tactical candidates: immediate wins, immediate blocks, and
+nearby legal points. This is the default direction for beating weak Rapfi; raw policy-only moves are mainly useful for
+debugging imitation quality.
 
 For local Rapfi settings, configure the engine through its own config or use a low move timeout:
 

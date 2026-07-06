@@ -26,6 +26,8 @@ def main() -> None:
     parser.add_argument("--max-node", type=int, default=1000)
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--tactical", action="store_true")
+    parser.add_argument("--candidate-limit", type=int, default=32)
     parser.add_argument("--reuse-rapfi-process", action="store_true")
     args = parser.parse_args()
 
@@ -44,7 +46,13 @@ def main() -> None:
     rows = []
     for game_index in range(args.games):
         color = BLACK if game_index % 2 == 0 else WHITE
-        move_fn = agent.move if agent is not None else heuristic_move
+        if agent is None:
+            move_fn = heuristic_move
+        elif args.tactical:
+            def move_fn(board, side):
+                return agent.tactical_move(board, side, limit=args.candidate_limit)
+        else:
+            move_fn = agent.move
         result = play_vs_rapfi(
             move_fn,
             model_color=color,
@@ -54,7 +62,9 @@ def main() -> None:
         )
         rows.append({
             "game": game_index,
-            "agent": "policy_value" if agent is not None else "heuristic",
+            "agent": "policy_value_tactical" if agent is not None and args.tactical else (
+                "policy_value" if agent is not None else "heuristic"
+            ),
             "model_color": "black" if color == BLACK else "white",
             "result": result.result,
             "winner": result.winner,

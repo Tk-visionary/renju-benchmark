@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from renju_benchmark.rules import Board
+from renju_benchmark.rules import BLACK, WHITE, Board
 from renju_benchmark.rl.board_encoding import encode_position, index_to_move, move_to_index
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model, require_torch
+from renju_benchmark.rl.search import tactical_candidates
 
 
 class PolicyValueAgent:
@@ -25,6 +26,17 @@ class PolicyValueAgent:
     def move(self, board: Board, side: str) -> tuple[int, int]:
         return index_to_move(self.rank_moves(board, side, top_k=1)[0])
 
+    def tactical_move(self, board: Board, side: str, limit: int = 32) -> tuple[int, int]:
+        candidates = tactical_candidates(board, _side_to_color(side), limit=limit)
+        if not candidates:
+            return self.move(board, side)
+        ranked = self.rank_moves(board, side, top_k=225)
+        candidate_indices = {move_to_index(move) for move in candidates}
+        for index in ranked:
+            if index in candidate_indices:
+                return index_to_move(index)
+        return candidates[0]
+
     def rank_moves(self, board: Board, side: str, top_k: int = 10) -> list[int]:
         encoded = encode_position(board, side)
         x = self.torch.tensor([encoded.planes], dtype=self.torch.float32, device=self.device)
@@ -41,3 +53,7 @@ class PolicyValueAgent:
             if index == target:
                 return rank
         return None
+
+
+def _side_to_color(side: str) -> str:
+    return BLACK if side.lower() in {"black", "x"} else WHITE
