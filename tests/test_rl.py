@@ -172,6 +172,17 @@ def test_policy_value_model_config_is_plain_dataclass() -> None:
     assert config.residual_blocks == 2
 
 
+def test_build_hrm_model_forward_shape() -> None:
+    torch = pytest.importorskip("torch")
+
+    config = ModelConfig(model_type="hrm", channels=8, hrm_cycles=1, hrm_low_steps=1)
+    model = build_model(config)
+    logits, value = model(torch.zeros(2, len(CHANNELS), BOARD_SIZE, BOARD_SIZE))
+
+    assert logits.shape == (2, BOARD_SIZE * BOARD_SIZE)
+    assert value.shape == (2,)
+
+
 def test_build_model_reports_missing_torch_cleanly(monkeypatch: pytest.MonkeyPatch) -> None:
     real_import = __import__
 
@@ -204,6 +215,31 @@ def test_policy_value_agent_checkpoint_roundtrip(tmp_path) -> None:
     move = agent.move(Board.empty(), "black")
     assert Board.empty().in_bounds(*move)
     assert agent.rank_moves(Board.empty(), "black", top_k=3)
+
+
+def test_policy_value_agent_hrm_checkpoint_roundtrip(tmp_path) -> None:
+    torch = pytest.importorskip("torch")
+    from renju_benchmark.rl.inference import PolicyValueAgent
+
+    checkpoint = tmp_path / "hrm.pt"
+    config = ModelConfig(model_type="hrm", channels=8, hrm_cycles=1, hrm_low_steps=1)
+    model = build_model(config)
+    torch.save(
+        {
+            "model_state": model.state_dict(),
+            "config": {
+                "model_type": config.model_type,
+                "channels": config.channels,
+                "input_channels": config.input_channels,
+                "hrm_cycles": config.hrm_cycles,
+                "hrm_low_steps": config.hrm_low_steps,
+            },
+        },
+        checkpoint,
+    )
+
+    agent = PolicyValueAgent(checkpoint)
+    assert Board.empty().in_bounds(*agent.move(Board.empty(), "black"))
 
 
 def test_policy_value_agent_tactical_move_prioritizes_win(tmp_path) -> None:

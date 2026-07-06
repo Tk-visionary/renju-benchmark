@@ -17,8 +17,11 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--model-type", choices=["resnet", "hrm"], default="resnet")
     parser.add_argument("--channels", type=int, default=64)
     parser.add_argument("--resblocks", type=int, default=6)
+    parser.add_argument("--hrm-cycles", type=int, default=4)
+    parser.add_argument("--hrm-low-steps", type=int, default=2)
     args = parser.parse_args()
 
     torch = require_torch()
@@ -27,7 +30,13 @@ def main() -> None:
     x = torch.tensor([row["planes"] for row in rows], dtype=torch.float32)
     y = torch.tensor([row["policy_index"] for row in rows], dtype=torch.long)
 
-    model = build_model(ModelConfig(channels=args.channels, residual_blocks=args.resblocks))
+    model = build_model(ModelConfig(
+        model_type=args.model_type,
+        channels=args.channels,
+        residual_blocks=args.resblocks,
+        hrm_cycles=args.hrm_cycles,
+        hrm_low_steps=args.hrm_low_steps,
+    ))
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     loss_fn = torch.nn.CrossEntropyLoss()
 
@@ -50,9 +59,12 @@ def main() -> None:
         {
             "model_state": model.state_dict(),
             "config": {
+                "model_type": args.model_type,
                 "channels": args.channels,
                 "resblocks": args.resblocks,
                 "input_channels": x.shape[1],
+                "hrm_cycles": args.hrm_cycles,
+                "hrm_low_steps": args.hrm_low_steps,
             },
         },
         args.output,

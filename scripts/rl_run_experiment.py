@@ -34,8 +34,11 @@ def main() -> None:
     parser.add_argument("--max-plies", type=int, default=8)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--model-type", choices=["resnet", "hrm"], default="resnet")
     parser.add_argument("--channels", type=int, default=32)
     parser.add_argument("--resblocks", type=int, default=2)
+    parser.add_argument("--hrm-cycles", type=int, default=4)
+    parser.add_argument("--hrm-low-steps", type=int, default=2)
     parser.add_argument("--eval-games", type=int, default=2)
     parser.add_argument("--eval-max-plies", type=int, default=12)
     parser.add_argument("--tactical-games", type=int, default=2)
@@ -116,8 +119,11 @@ def main() -> None:
         "--output", str(checkpoint),
         "--epochs", str(args.epochs),
         "--batch-size", str(args.batch_size),
+        "--model-type", args.model_type,
         "--channels", str(args.channels),
         "--resblocks", str(args.resblocks),
+        "--hrm-cycles", str(args.hrm_cycles),
+        "--hrm-low-steps", str(args.hrm_low_steps),
     ])
     imitation = capture_json([
         sys.executable,

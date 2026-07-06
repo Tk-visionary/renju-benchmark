@@ -135,6 +135,26 @@ The first model is intentionally small:
 - 225-way policy head
 - scalar value head
 
+## HRM-Style Model
+
+The experimental `--model-type hrm` model keeps low-level and high-level latent feature maps and updates them for a
+fixed number of recurrent cycles before producing the policy/value heads. It is intended as a Renju adaptation of the
+HRM idea: latent board-state refinement instead of one-shot policy prediction.
+
+```bash
+python scripts/rl_train_imitation.py \
+  --input data/generated/rl/tactical_1k.jsonl \
+  --output data/generated/rl/hrm_policy_value.pt \
+  --model-type hrm \
+  --channels 32 \
+  --hrm-cycles 4 \
+  --hrm-low-steps 2 \
+  --epochs 3
+```
+
+The first comparison target is HRM versus the default ResNet on tactical labels, then Rapfi imitation labels. HRM should
+be treated as a policy/value and tactical-feature model; it still needs tactical filtering or search for play.
+
 ## Evaluation Against Rapfi
 
 The first evaluation target is a baseline move function versus weak Rapfi settings:

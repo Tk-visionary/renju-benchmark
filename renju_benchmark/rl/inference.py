@@ -14,8 +14,12 @@ class PolicyValueAgent:
         payload = torch.load(checkpoint, map_location=device)
         config_payload = payload.get("config", {})
         config = ModelConfig(
+            model_type=str(config_payload.get("model_type", "resnet")),
             channels=int(config_payload.get("channels", 64)),
             residual_blocks=int(config_payload.get("resblocks", config_payload.get("residual_blocks", 6))),
+            input_channels=int(config_payload.get("input_channels", 5)),
+            hrm_cycles=int(config_payload.get("hrm_cycles", 4)),
+            hrm_low_steps=int(config_payload.get("hrm_low_steps", 2)),
         )
         self.torch = torch
         self.device = device
