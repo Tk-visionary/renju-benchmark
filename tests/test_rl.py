@@ -14,7 +14,12 @@ from renju_benchmark.rl.board_encoding import (
 from renju_benchmark.rl.datasets import encoded_training_row
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model
 from renju_benchmark.rl.rapfi_env import score_for_model, summarize_game_rows, winner_after_move_result
-from renju_benchmark.rl.search import tactical_candidates, tactical_candidates_with_roles, winning_threat_count
+from renju_benchmark.rl.search import (
+    tactical_candidates,
+    tactical_candidates_with_roles,
+    tactical_heuristic_move,
+    winning_threat_count,
+)
 
 
 def board_from_points(points: list[tuple[str, str]]) -> Board:
@@ -193,6 +198,25 @@ def test_policy_value_agent_tactical_move_prioritizes_force_win_group(tmp_path) 
     agent = PolicyValueAgent(checkpoint)
     roles = {item.move: item.role for item in tactical_candidates_with_roles(board, BLACK)}
     assert roles[agent.tactical_move(board, "black")] == "force_win"
+
+
+def test_tactical_heuristic_move_uses_role_priority() -> None:
+    board = board_from_points([
+        ("F8", BLACK),
+        ("G8", BLACK),
+        ("H6", BLACK),
+        ("H7", BLACK),
+        ("H9", BLACK),
+    ])
+
+    assert tactical_heuristic_move(board, BLACK) == parse_coord("H8")
+
+
+def test_rapfi_eval_agent_name_for_tactical_baseline() -> None:
+    from scripts.rl_evaluate_vs_rapfi import agent_name
+
+    assert agent_name(has_checkpoint=False, tactical=True) == "tactical_heuristic"
+    assert agent_name(has_checkpoint=False, tactical=False) == "heuristic"
 
 
 def test_winner_after_illegal_move_is_opponent() -> None:

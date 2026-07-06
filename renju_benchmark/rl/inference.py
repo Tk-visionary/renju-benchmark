@@ -5,7 +5,7 @@ from pathlib import Path
 from renju_benchmark.rules import BLACK, WHITE, Board
 from renju_benchmark.rl.board_encoding import encode_position, index_to_move, move_to_index
 from renju_benchmark.rl.policy_value_net import ModelConfig, build_model, require_torch
-from renju_benchmark.rl.search import tactical_candidates, tactical_candidates_with_roles
+from renju_benchmark.rl.search import ROLE_ORDER, tactical_candidates, tactical_candidates_with_roles
 
 
 class PolicyValueAgent:
@@ -28,7 +28,7 @@ class PolicyValueAgent:
 
     def tactical_move(self, board: Board, side: str, limit: int = 32) -> tuple[int, int]:
         candidate_items = tactical_candidates_with_roles(board, _side_to_color(side), limit=limit)
-        for role in ("win", "block", "force_win", "threat", "safe", "unsafe"):
+        for role in ROLE_ORDER:
             candidates = [item.move for item in candidate_items if item.role == role]
             if candidates:
                 return self.choose_ranked_candidate(board, side, candidates)

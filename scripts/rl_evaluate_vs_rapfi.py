@@ -12,6 +12,7 @@ from renju_benchmark.rapfi import RapfiConfig
 from renju_benchmark.rules import BLACK, WHITE
 from renju_benchmark.rl.inference import PolicyValueAgent
 from renju_benchmark.rl.rapfi_env import play_vs_rapfi, summarize_game_rows
+from renju_benchmark.rl.search import tactical_heuristic_move
 
 
 def main() -> None:
@@ -47,7 +48,10 @@ def main() -> None:
     rows = []
     for game_index in range(args.games):
         color = BLACK if game_index % 2 == 0 else WHITE
-        if agent is None:
+        if agent is None and args.tactical:
+            def move_fn(board, side):
+                return tactical_heuristic_move(board, side, limit=args.candidate_limit)
+        elif agent is None:
             move_fn = heuristic_move
         elif args.tactical:
             def move_fn(board, side):
@@ -63,9 +67,7 @@ def main() -> None:
         )
         rows.append({
             "game": game_index,
-            "agent": "policy_value_tactical" if agent is not None and args.tactical else (
-                "policy_value" if agent is not None else "heuristic"
-            ),
+            "agent": agent_name(agent is not None, args.tactical),
             "model_color": "black" if color == BLACK else "white",
             "result": result.result,
             "winner": result.winner,
@@ -73,6 +75,16 @@ def main() -> None:
         })
     output = rows if args.games_only else {"summary": summarize_game_rows(rows), "games": rows}
     print(json.dumps(output, indent=2, sort_keys=not args.games_only))
+
+
+def agent_name(has_checkpoint: bool, tactical: bool) -> str:
+    if has_checkpoint and tactical:
+        return "policy_value_tactical"
+    if has_checkpoint:
+        return "policy_value"
+    if tactical:
+        return "tactical_heuristic"
+    return "heuristic"
 
 
 if __name__ == "__main__":

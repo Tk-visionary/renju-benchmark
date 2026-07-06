@@ -12,6 +12,9 @@ class TacticalMove:
     role: str
 
 
+ROLE_ORDER = ("win", "block", "force_win", "threat", "safe", "unsafe")
+
+
 def opponent(color: str) -> str:
     return WHITE if color == BLACK else BLACK
 
@@ -107,3 +110,15 @@ def tactical_candidates_with_roles(
 
     ordered = by_role["block"] + by_role["force_win"] + by_role["threat"] + by_role["safe"] + by_role["unsafe"]
     return ordered[:limit]
+
+
+def tactical_heuristic_move(board: Board, color: str, limit: int = 32) -> tuple[int, int]:
+    candidates = tactical_candidates_with_roles(board, color, limit=limit)
+    if not candidates:
+        raise ValueError("no tactical candidates")
+    center = (7, 7)
+    for role in ROLE_ORDER:
+        role_moves = [item.move for item in candidates if item.role == role]
+        if role_moves:
+            return min(role_moves, key=lambda move: abs(move[0] - center[0]) + abs(move[1] - center[1]))
+    return candidates[0].move

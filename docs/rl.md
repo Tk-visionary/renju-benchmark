@@ -152,6 +152,9 @@ nearby legal points. It prioritizes double threats that create multiple next-tur
 filters out moves that allow an immediate winning reply when there is a safer candidate. This is the default direction
 for beating weak Rapfi; raw policy-only moves are mainly useful for debugging imitation quality.
 
+If `--tactical` is used without `--checkpoint`, the evaluator runs the same role-prioritized tactical search as a
+deterministic baseline. Use this to compare the learned policy against the hand-written tactical floor.
+
 ## Experiment Runner
 
 Use `scripts/rl_run_experiment.py` to run the current MVP loop and keep artifacts together:
